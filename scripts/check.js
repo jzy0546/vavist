@@ -1,8 +1,8 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { tools } from "../src/tools.js";
 import { pages } from "../src/pages.js";
+import { guides } from "../src/guides.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -10,9 +10,16 @@ const distDir = path.join(rootDir, "dist");
 
 const requiredRoutes = [
   "/",
-  ...tools.map((tool) => `/tools/${tool.slug}/`),
-  ...pages.map((page) => `/${page.slug}/`)
+  "/tools/",
+  "/webgl-scene-health-check/",
+  "/resources/",
+  "/guides/",
+  ...guides.map((guide) => `/guides/${guide.slug}/`),
+  ...pages.map((page) => `/${page.slug}/`),
+  "/404/"
 ];
+
+const sitemapRoutes = requiredRoutes.filter((route) => route !== "/404/");
 
 const fail = (message) => {
   throw new Error(message);
@@ -74,21 +81,21 @@ const checkHtml = async (filePath) => {
   if (!/<meta name="description" content="[^"]+">/.test(content)) {
     fail(`${relative} is missing meta description`);
   }
-  if (!/<h1>[^<]+<\/h1>/.test(content)) fail(`${relative} is missing h1`);
+  if (!/<h1[^>]*>[^<]+<\/h1>/.test(content)) fail(`${relative} is missing h1`);
   if (!/<link rel="canonical" href="[^"]+">/.test(content)) {
     fail(`${relative} is missing canonical`);
   }
   if (/noindex/i.test(content)) fail(`${relative} contains noindex`);
 
-  const jsonBlocks = [...content.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+  const jsonBlocks = [
+    ...content.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)
+  ];
   if (jsonBlocks.length === 0) fail(`${relative} is missing JSON-LD`);
   for (const block of jsonBlocks) {
     JSON.parse(block[1]);
   }
 
-  const links = [
-    ...content.matchAll(/\s(?:href|src)="([^"]+)"/g)
-  ].map((match) => match[1]);
+  const links = [...content.matchAll(/\s(?:href|src)="([^"]+)"/g)].map((match) => match[1]);
 
   for (const href of links) {
     if (!(await targetExists(href))) {
@@ -102,7 +109,7 @@ const checkSitemap = async () => {
   if (!(await exists(sitemapPath))) fail("sitemap.xml is missing");
   const sitemap = await readFile(sitemapPath, "utf8");
 
-  for (const route of requiredRoutes) {
+  for (const route of sitemapRoutes) {
     if (!sitemap.includes(route === "/" ? "<loc>" : route)) {
       fail(`sitemap.xml is missing route ${route}`);
     }
@@ -124,6 +131,7 @@ const check = async () => {
   }
 
   if (!(await exists(path.join(distDir, "robots.txt")))) fail("robots.txt is missing");
+  if (!(await exists(path.join(distDir, "404.html")))) fail("404.html is missing");
   await checkSitemap();
 
   console.log(`Checked ${htmlFiles.length} HTML files successfully.`);

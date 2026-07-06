@@ -2,8 +2,10 @@ import { mkdir, rm, writeFile, copyFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { site, pathFor } from "../src/config.js";
-import { tools, getTool } from "../src/tools.js";
+import { healthChecks, labTools, toolExplainers } from "../src/tools.js";
 import { pages } from "../src/pages.js";
+import { getGuide, guides } from "../src/guides.js";
+import { resourceGroups } from "../src/resources.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -28,10 +30,23 @@ const html = (value = "") =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
+const slugText = (value = "") =>
+  String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
 const routeUrl = (route) => {
   if (route.startsWith("http") || route.startsWith("mailto:")) return route;
+  if (route.startsWith("#")) return route;
   if (route === "/") return `${basePath || ""}/`;
   return `${basePath}${route}`;
+};
+
+const labHref = (route = "/") => {
+  const normalizedRoute = route.startsWith("/") ? route : `/${route}`;
+  return `${site.labUrl}${normalizedRoute}`;
 };
 
 const outPathForRoute = (route) => {
@@ -68,30 +83,45 @@ const adsenseScript = () => {
 
 const nav = () => `
   <header class="site-header">
-    <a class="brand" href="${routeUrl("/")}" aria-label="${html(site.name)} home">
-      <span class="brand-mark">PM</span>
-      <span>${html(site.name)}</span>
-    </a>
-    <nav class="nav-links" aria-label="Primary navigation">
-      <a href="${routeUrl("/tools/ai-prompt-generator/")}">Prompt</a>
-      <a href="${routeUrl("/tools/ai-image-prompt-generator/")}">Image</a>
-      <a href="${routeUrl("/tools/ai-token-counter/")}">Token</a>
-      <a href="${routeUrl("/about/")}">About</a>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="brand" href="${routeUrl("/")}" aria-label="${html(site.name)} home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>${html(site.name)}</span>
+      </a>
+      <button class="menu-button" type="button" data-menu-button aria-expanded="false" aria-label="Open navigation">
+        <span aria-hidden="true"></span>
+      </button>
+      <div class="nav-links" data-menu>
+        <a href="${routeUrl("/")}">Home</a>
+        <a href="${routeUrl("/tools/")}">Tools</a>
+        <a href="${routeUrl("/webgl-scene-health-check/")}">Checklist</a>
+        <a href="${routeUrl("/guides/")}">Guides</a>
+        <a href="${routeUrl("/resources/")}">Resources</a>
+        <a href="${routeUrl("/about/")}">About</a>
+        <a class="nav-cta" href="${html(labHref("/"))}">Open lab</a>
+      </div>
     </nav>
   </header>`;
 
 const footer = () => `
   <footer class="site-footer">
-    <div>
-      <strong>${html(site.name)}</strong>
-      <p>${html(site.tagline)}</p>
+    <div class="footer-inner">
+      <div>
+        <strong>${html(site.name)}</strong>
+        <p>${html(site.tagline)}</p>
+      </div>
+      <nav aria-label="Footer navigation">
+        <a href="${routeUrl("/about/")}">About</a>
+        <a href="${routeUrl("/tools/")}">Tools</a>
+        <a href="${routeUrl("/webgl-scene-health-check/")}">Checklist</a>
+        <a href="${routeUrl("/guides/")}">Guides</a>
+        <a href="${routeUrl("/resources/")}">Resources</a>
+        <a href="${routeUrl("/contact/")}">Contact</a>
+        <a href="${routeUrl("/privacy-policy/")}">Privacy</a>
+        <a href="${routeUrl("/terms-of-use/")}">Terms</a>
+        <a href="${routeUrl("/cookie-policy/")}">Cookies</a>
+      </nav>
     </div>
-    <nav aria-label="Footer navigation">
-      <a href="${routeUrl("/privacy-policy/")}">Privacy</a>
-      <a href="${routeUrl("/terms-of-use/")}">Terms</a>
-      <a href="${routeUrl("/cookie-policy/")}">Cookies</a>
-      <a href="${routeUrl("/contact/")}">Contact</a>
-    </nav>
   </footer>`;
 
 const layout = ({ route, title, description, body, structuredData = [] }) => {
@@ -125,7 +155,7 @@ const layout = ({ route, title, description, body, structuredData = [] }) => {
     ${body}
   </main>
   ${footer()}
-  <script src="${routeUrl("/assets/app.js")}" defer></script>
+  <script type="module" src="${routeUrl("/assets/app.js")}"></script>
 </body>
 </html>`;
 };
@@ -141,6 +171,398 @@ const breadcrumb = (items) => ({
   }))
 });
 
+const itemList = (items, name) => ({
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name,
+  itemListElement: items.map((item, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    name: item.name || item.title,
+    url: labHref(item.path)
+  }))
+});
+
+const guideItemList = (items, name) => ({
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name,
+  itemListElement: items.map((item, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    name: item.title,
+    url: pathFor(`/guides/${item.slug}/`)
+  }))
+});
+
+const toolCard = (tool, index) => `
+  <a class="launch-card launch-card-${index + 1}" href="${html(labHref(tool.path))}" data-reveal>
+    <span>${html(tool.label)}</span>
+    <strong>${html(tool.name)}</strong>
+    <small>${html(tool.description)}</small>
+  </a>`;
+
+const guideCard = (guide) => `
+  <a class="guide-card" href="${routeUrl(`/guides/${guide.slug}/`)}" data-reveal>
+    <small>${html(guide.minutes)} min read · ${html(guide.tags[0])}</small>
+    <strong>${html(guide.title)}</strong>
+    <span>${html(guide.summary)}</span>
+  </a>`;
+
+const renderHome = () => {
+  const route = "/";
+  const body = `
+    <section class="hero" aria-labelledby="home-title">
+      <div class="hero-scene" data-scene>
+        <canvas id="lab-canvas" aria-label="Interactive Three.js lab object"></canvas>
+        <div class="scene-fallback" aria-hidden="true">
+          <span>WebGL scene loading</span>
+        </div>
+      </div>
+      <div class="hero-shade" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="eyebrow">Vavist main entrance</p>
+        <h1 id="home-title">Three.js Lab</h1>
+        <p class="hero-text">A browser-native workspace for inspecting GLB files, framing cameras, tuning shaders, and copying practical Three.js patterns.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="${html(labHref("/gltf-viewer/"))}">Open GLB viewer</a>
+          <a class="button secondary" href="${routeUrl("/webgl-scene-health-check/")}">Run scene check</a>
+          <a class="button secondary" href="${routeUrl("/guides/")}">Browse guides</a>
+        </div>
+        <dl class="hero-metrics" aria-label="Lab coverage">
+          <div><dt>5</dt><dd>focused tools</dd></div>
+          <div><dt>${guides.length}</dt><dd>builder guides</dd></div>
+          <div><dt>1</dt><dd>publishing checklist</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="section lab-tools" id="lab-tools">
+      <div class="section-inner">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">Launchpad</p>
+          <h2>Open the exact bench you need.</h2>
+          <p>Vavist now routes the homepage toward the Three.js Lab surface: compact browser tools for the parts of WebGL work that usually waste the most time.</p>
+        </div>
+        <div class="launch-grid">
+          ${labTools.map(toolCard).join("\n")}
+        </div>
+        <div class="section-actions" data-reveal>
+          <a class="button secondary" href="${routeUrl("/tools/")}">Read the tool workflows</a>
+          <a class="button secondary" href="${routeUrl("/webgl-scene-health-check/")}">Check a scene before publishing</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section process-band">
+      <div class="section-inner process-grid">
+        <div data-reveal>
+          <p class="eyebrow">Static by design</p>
+          <h2>Fast pages, local files, readable examples.</h2>
+        </div>
+        <div class="principles" data-reveal>
+          <p>Three.js Lab keeps the public site focused on browser graphics. The tools favor transparent math, copyable code, and client-side previews over accounts or opaque backends.</p>
+          <ul>
+            <li>Model inspection stays in the browser.</li>
+            <li>Camera and lighting values are easy to copy.</li>
+            <li>Guides target narrow Three.js search problems.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section guides" id="guides">
+      <div class="section-inner">
+        <div class="section-head" data-reveal>
+          <p class="eyebrow">Reference routes</p>
+          <h2>Guides for the problems builders actually search.</h2>
+          <p>Original notes from the lab: each guide turns a common Three.js failure mode into a practical workflow, with source links for deeper reading.</p>
+        </div>
+        <div class="guide-grid">
+          ${guides.slice(0, 6).map(guideCard).join("\n")}
+        </div>
+        <div class="section-actions" data-reveal>
+          <a class="button secondary" href="${routeUrl("/guides/")}">View all guides</a>
+        </div>
+      </div>
+    </section>`;
+
+  return layout({
+    route,
+    title: "Three.js Lab: Vavist WebGL Tools",
+    description: site.description,
+    body,
+    structuredData: [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: site.name,
+        url: pathFor("/"),
+        description: site.description
+      },
+      itemList(labTools, "Three.js Lab tools"),
+      guideItemList(guides, "Three.js Lab guides")
+    ]
+  });
+};
+
+const renderGuideIndex = () => {
+  const route = "/guides/";
+  const body = `
+    <section class="guide-index">
+      <div class="section-inner">
+        <p class="eyebrow">Three.js guides</p>
+        <h1>Practical WebGL notes for builders.</h1>
+        <p class="hero-text">Original Three.js guides written for the problems that show up in real browser scenes: imports, cameras, shaders, lighting, responsive canvases, pivots, performance, and color.</p>
+        <div class="guide-grid guide-grid-index">
+          ${guides.map(guideCard).join("\n")}
+        </div>
+      </div>
+    </section>`;
+
+  return layout({
+    route,
+    title: "Three.js Guides: Vavist WebGL Notes",
+    description:
+      "Read original Three.js guides for GLTFLoader, camera fitting, ShaderMaterial, lighting, particles, responsive canvas sizing, performance, and debugging.",
+    body,
+    structuredData: [
+      breadcrumb([
+        { name: "Home", route: "/" },
+        { name: "Guides", route }
+      ]),
+      guideItemList(guides, "Three.js guides")
+    ]
+  });
+};
+
+const localToolCard = (tool) => `
+  <article class="tool-explainer">
+    <div>
+      <p class="eyebrow">${html(tool.label)}</p>
+      <h2>${html(tool.name)}</h2>
+      <p>${html(tool.localUse)}</p>
+    </div>
+    <div class="tool-workflow">
+      <strong>Workflow</strong>
+      <ol>
+        ${tool.workflow.map((step) => `<li>${html(step)}</li>`).join("\n")}
+      </ol>
+      <div class="tool-links">
+        <a class="button primary" href="${html(labHref(tool.path))}">Open ${html(tool.name)}</a>
+        ${tool.relatedGuides
+          .map((slug) => {
+            const guide = getGuide(slug);
+            return guide
+              ? `<a class="text-link" href="${routeUrl(`/guides/${guide.slug}/`)}">${html(guide.title)}</a>`
+              : "";
+          })
+          .join("\n")}
+      </div>
+    </div>
+  </article>`;
+
+const renderToolsIndex = () => {
+  const route = "/tools/";
+  const body = `
+    <section class="guide-index tool-index">
+      <div class="section-inner">
+        <p class="eyebrow">Three.js tools</p>
+        <h1>Small benches for real WebGL problems.</h1>
+        <p class="hero-text">The live tools run on the Three.js Lab subdomain, but the root site explains when to use each one, what to measure, and which guide to read next.</p>
+        <div class="tool-index-actions">
+          <a class="button primary" href="${routeUrl("/webgl-scene-health-check/")}">Run scene health check</a>
+          <a class="button secondary" href="${html(labHref("/"))}">Open full lab</a>
+        </div>
+        <div class="tool-explainer-stack">
+          ${toolExplainers.map(localToolCard).join("\n")}
+        </div>
+      </div>
+    </section>`;
+
+  return layout({
+    route,
+    title: "Three.js Tools: Vavist Lab Index",
+    description:
+      "Use the Vavist Three.js tool index to choose a GLB viewer, camera FOV calculator, ShaderMaterial starter, lighting presets, examples, and a WebGL health checklist.",
+    body,
+    structuredData: [
+      breadcrumb([
+        { name: "Home", route: "/" },
+        { name: "Tools", route }
+      ]),
+      itemList(toolExplainers, "Three.js Lab tools")
+    ]
+  });
+};
+
+const healthCheckInputs = () =>
+  healthChecks
+    .map(
+      (group) => `<fieldset class="health-group">
+        <legend>${html(group.group)}</legend>
+        ${group.items
+          .map(
+            (item) => `<label class="health-option">
+              <input type="checkbox" data-health-item data-points="${html(item.points)}" data-label="${html(item.label)}">
+              <span>${html(item.label)}</span>
+              <strong>${html(item.points)}</strong>
+            </label>`
+          )
+          .join("\n")}
+      </fieldset>`
+    )
+    .join("\n");
+
+const renderHealthCheck = () => {
+  const route = "/webgl-scene-health-check/";
+  const body = `
+    <section class="health-page">
+      <div class="section-inner health-layout" data-health-check>
+        <header class="health-header">
+          <p class="eyebrow">Interactive checklist</p>
+          <h1>WebGL scene health check</h1>
+          <p class="hero-text">Score a Three.js scene before publishing. The checklist focuses on the failure modes that make WebGL pages feel unfinished: invisible models, broken camera framing, heavy assets, weak loading states, and mobile performance surprises.</p>
+        </header>
+        <aside class="health-result" aria-live="polite">
+          <span>Scene readiness</span>
+          <strong data-health-score>0</strong>
+          <p data-health-status>Start checking the items that are true for your scene.</p>
+          <div class="health-meter"><i data-health-meter></i></div>
+          <button class="button primary" type="button" data-health-copy>Copy recommendations</button>
+          <p class="status" data-health-message></p>
+        </aside>
+        <form class="health-form">
+          ${healthCheckInputs()}
+        </form>
+        <section class="article-section health-notes">
+          <h2>How to read the score</h2>
+          <p>A high score does not mean the scene is visually finished. It means the technical surface is less likely to break under real page conditions. Use the result as a publishing gate before you add more polish.</p>
+          <p>Scores below 55 usually mean the scene still has structural risk. Scores between 55 and 79 are workable but need mobile and loading checks. Scores at 80 or above are ready for design review, copy review, and real-device testing.</p>
+          <div class="guide-grid">
+            ${["three-js-mobile-performance-checklist", "three-js-scene-debugging-checklist", "three-js-performance-budget"]
+              .map((slug) => guideCard(getGuide(slug)))
+              .join("\n")}
+          </div>
+        </section>
+      </div>
+    </section>`;
+
+  return layout({
+    route,
+    title: "WebGL Scene Health Check: Three.js Publishing Checklist",
+    description:
+      "Run a browser-only WebGL scene health check for Three.js assets, camera framing, rendering, mobile performance, loading states, and publishing readiness.",
+    body,
+    structuredData: [
+      breadcrumb([
+        { name: "Home", route: "/" },
+        { name: "WebGL Scene Health Check", route }
+      ]),
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "WebGL Scene Health Check",
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "Web",
+        url: pathFor(route),
+        description:
+          "Browser-only checklist for scoring Three.js scene readiness before publishing.",
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD"
+        }
+      }
+    ]
+  });
+};
+
+const renderResources = () => {
+  const route = "/resources/";
+  const body = `
+    <section class="guide-index resources-page">
+      <div class="section-inner">
+        <p class="eyebrow">Reference library</p>
+        <h1>Primary sources for Three.js builders.</h1>
+        <p class="hero-text">Vavist articles are written from practical testing and primary documentation. This page collects the references used most often when a WebGL scene needs accurate API behavior, browser constraints, asset-format context, or publishing guidance.</p>
+        <div class="resource-grid">
+          ${resourceGroups
+            .map(
+              (group) => `<article class="resource-card">
+                <h2>${html(group.name)}</h2>
+                <p>${html(group.description)}</p>
+                <ul>
+                  ${group.links
+                    .map((link) => `<li><a href="${html(link.url)}">${html(link.label)}</a></li>`)
+                    .join("\n")}
+                </ul>
+              </article>`
+            )
+            .join("\n")}
+        </div>
+        <section class="article-section">
+          <h2>How these references are used</h2>
+          <p>Vavist does not copy documentation into article pages. The guides translate recurring Three.js problems into checklists, workflows, and small code patterns, then link back to the primary source when API behavior matters. That keeps each page useful as an explanation while still making it easy to verify details against the official docs.</p>
+          <p>When a topic depends on browser behavior, MDN is treated as the source of truth. When a topic depends on asset format, Khronos glTF material is preferred. When a topic depends on advertising or search review, Google documentation is cited directly. This source hierarchy keeps the site practical without turning it into a pile of unsupported tips.</p>
+        </section>
+      </div>
+    </section>`;
+
+  return layout({
+    route,
+    title: "Three.js Resources: Official References for WebGL Builders",
+    description:
+      "Primary Three.js, MDN, Khronos glTF, Google Search, and AdSense references used by Vavist WebGL guides.",
+    body,
+    structuredData: [
+      breadcrumb([
+        { name: "Home", route: "/" },
+        { name: "Resources", route }
+      ]),
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Three.js Resources",
+        url: pathFor(route),
+        description:
+          "Primary references for Three.js, WebGL browser behavior, asset formats, and publishing quality."
+      }
+    ]
+  });
+};
+
+const relatedGuides = (guide) => {
+  const index = guides.findIndex((item) => item.slug === guide.slug);
+  return guides
+    .filter((item) => item.slug !== guide.slug)
+    .slice(index + 1)
+    .concat(guides.slice(0, index))
+    .slice(0, 3);
+};
+
+const adjacentGuides = (guide) => {
+  const index = guides.findIndex((item) => item.slug === guide.slug);
+  const previous = guides[(index - 1 + guides.length) % guides.length];
+  const next = guides[(index + 1) % guides.length];
+  return { previous, next };
+};
+
+const faqsForGuide = (guide) => [
+  {
+    q: `When should I use ${guide.title}?`,
+    a: `Use it when your Three.js scene has a focused ${guide.tags[0] || "WebGL"} problem and you need a practical checklist before adding more visual polish.`
+  },
+  {
+    q: "Is the code snippet production-ready?",
+    a: "Treat the snippet as a clear starting point. Test it in your scene, adapt naming and paths, and verify behavior on mobile hardware before publishing."
+  },
+  {
+    q: "What should I check after applying this guide?",
+    a: "Run the scene through mobile sizing, console errors, loading states, source links, and related guide paths so the page remains useful even when assets or WebGL fail."
+  }
+];
+
 const faqJsonLd = (faqs) => ({
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -154,244 +576,148 @@ const faqJsonLd = (faqs) => ({
   }))
 });
 
-const softwareJsonLd = (tool, route) => ({
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: tool.title,
-  applicationCategory: "ProductivityApplication",
-  operatingSystem: "Web",
-  url: pathFor(route),
-  description: tool.description,
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD"
-  }
-});
+const renderToc = (guide) => {
+  const items = [
+    ...guide.sections.map((section) => section.heading),
+    "When this guide is the right tool",
+    "Common mistake to avoid",
+    "Publishing check",
+    guide.code.label,
+    "FAQ",
+    "Sources and further reading"
+  ];
 
-const toolCard = (tool) => `
-  <a class="tool-card" href="${routeUrl(`/tools/${tool.slug}/`)}">
-    <span>${html(tool.navLabel)}</span>
-    <strong>${html(tool.title)}</strong>
-    <small>${html(tool.description)}</small>
-  </a>`;
+  return `<nav class="article-toc" aria-label="Article sections">
+    <span>On this page</span>
+    ${items.map((item) => `<a href="#${slugText(item)}">${html(item)}</a>`).join("\n")}
+  </nav>`;
+};
 
-const renderHome = () => {
-  const route = "/";
+const renderGuideFieldNotes = (guide) => {
+  const primaryTag = guide.tags[0] || "Three.js";
+  const mainTakeaway = guide.takeaways[0] || guide.summary;
+  const secondTakeaway = guide.takeaways[1] || guide.summary;
+  const thirdTakeaway = guide.takeaways[2] || guide.summary;
+
+  return `
+    <section class="article-section field-notes" id="when-this-guide-is-the-right-tool">
+      <h2>When this guide is the right tool</h2>
+      <p>Use this guide when the problem is specific enough that a broad Three.js tutorial would waste time. The focus here is ${html(primaryTag)} in a real browser page: what to check first, what to measure, and what to avoid before the scene becomes harder to reason about.</p>
+      <p>The practical rule is simple: ${html(mainTakeaway)} If that sentence describes the scene in front of you, treat the article as a checklist. Read the explanation, copy the smallest useful code pattern, then test the result in a narrow mobile viewport and a wide desktop viewport before adding more polish.</p>
+    </section>
+    <section class="article-section field-notes" id="common-mistake-to-avoid">
+      <h2>Common mistake to avoid</h2>
+      <p>The common mistake is treating ${html(guide.title)} as a visual tweak instead of a scene-system decision. Three.js problems often look like one broken line of code, but the actual issue is usually a chain: asset assumptions, renderer settings, camera math, material setup, interaction state, and page layout all meet inside the canvas.</p>
+      <p>That is why the safest fix is incremental. Start from a known-good scene, change one variable, and keep a visible diagnostic while testing. ${html(secondTakeaway)} When the scene works, remove temporary helpers and leave behind only the checks that make sense for users.</p>
+    </section>
+    <section class="article-section field-notes" id="publishing-check">
+      <h2>Publishing check</h2>
+      <p>Before publishing, run the scene through three questions. Does the page remain useful if WebGL fails or the asset loads slowly? Does the same scene still read clearly on a phone? Can another developer understand the important settings without reverse-engineering the whole file?</p>
+      <p>The last pass should be boring on purpose: verify canvas size, console errors, mobile performance, source links, internal links, and the related guide path. ${html(thirdTakeaway)} If any answer is fuzzy, fix that before introducing a new effect or a larger asset.</p>
+    </section>`;
+};
+
+const renderGuide = (guide) => {
+  const route = `/guides/${guide.slug}/`;
+  const related = relatedGuides(guide);
+  const adjacent = adjacentGuides(guide);
+  const faqs = faqsForGuide(guide);
   const body = `
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">Free AI utility tools</p>
-        <h1>Better prompts before you open your AI assistant.</h1>
-        <p class="hero-text">${html(site.description)}</p>
-        <div class="hero-actions">
-          <a class="button primary" href="${routeUrl("/tools/ai-prompt-generator/")}">Start with prompts</a>
-          <a class="button secondary" href="${routeUrl("/tools/ai-token-counter/")}">Estimate tokens</a>
+    <article class="guide-page">
+      <div class="article-shell">
+        <header class="article-header">
+          <a class="back-link" href="${routeUrl("/guides/")}">All guides</a>
+          <p class="eyebrow">${html(guide.tags.join(" / "))}</p>
+          <h1>${html(guide.title)}</h1>
+          <p class="article-summary">${html(guide.summary)}</p>
+          <div class="guide-meta">
+            <span>Updated ${html(guide.updated)}</span>
+            <span>${html(guide.minutes)} min read</span>
+          </div>
+        </header>
+        <aside class="takeaway-panel">
+          <strong>Takeaways</strong>
+          <ul>
+            ${guide.takeaways.map((item) => `<li>${html(item)}</li>`).join("\n")}
+          </ul>
+          ${renderToc(guide)}
+        </aside>
+        <div class="article-body">
+          ${guide.sections
+            .map(
+              (section) => `<section class="article-section" id="${slugText(section.heading)}">
+                <h2>${html(section.heading)}</h2>
+                ${section.paragraphs.map((paragraph) => `<p>${html(paragraph)}</p>`).join("\n")}
+              </section>`
+            )
+            .join("\n")}
+          ${renderGuideFieldNotes(guide)}
+          <section class="article-section" id="${slugText(guide.code.label)}">
+            <h2>${html(guide.code.label)}</h2>
+            <pre class="article-code"><code>${html(guide.code.value)}</code></pre>
+          </section>
+          <section class="article-section" id="faq">
+            <h2>FAQ</h2>
+            <div class="faq-list">
+              ${faqs
+                .map((faq) => `<details>
+                  <summary>${html(faq.q)}</summary>
+                  <p>${html(faq.a)}</p>
+                </details>`)
+                .join("\n")}
+            </div>
+          </section>
+          <section class="article-section" id="sources-and-further-reading">
+            <h2>Sources and further reading</h2>
+            <ul class="source-list">
+              ${guide.sources
+                .map((source) => `<li><a href="${html(source.url)}">${html(source.label)}</a></li>`)
+                .join("\n")}
+            </ul>
+          </section>
+          <nav class="article-neighbors" aria-label="Adjacent guides">
+            <a href="${routeUrl(`/guides/${adjacent.previous.slug}/`)}"><span>Previous</span><strong>${html(adjacent.previous.title)}</strong></a>
+            <a href="${routeUrl(`/guides/${adjacent.next.slug}/`)}"><span>Next</span><strong>${html(adjacent.next.title)}</strong></a>
+          </nav>
+          <section class="article-section related-guides">
+            <h2>Related guides</h2>
+            <div class="guide-grid">
+              ${related.map(guideCard).join("\n")}
+            </div>
+          </section>
         </div>
       </div>
-      <div class="hero-panel" aria-label="Prompt quality checklist">
-        <span>Prompt checklist</span>
-        <ol>
-          <li>Define the role</li>
-          <li>Add context</li>
-          <li>Choose output format</li>
-          <li>Set limits</li>
-          <li>Ask for review</li>
-        </ol>
-      </div>
-    </section>
-    <section class="section">
-      <div class="section-head">
-        <h2>Launch tools</h2>
-        <p>Five focused pages to test search demand before expanding the site.</p>
-      </div>
-      <div class="tool-grid">
-        ${tools.map(toolCard).join("\n")}
-      </div>
-    </section>
-    <section class="section split-section">
-      <div>
-        <h2>Built for a real MVP</h2>
-        <p>PromptMint starts small so search data can guide the next set of pages. The tools run locally, load fast, and do not require sign-up.</p>
-      </div>
-      <ul class="plain-list">
-        <li>Browser-only tools</li>
-        <li>Search-friendly static pages</li>
-        <li>No API keys or user accounts</li>
-        <li>Ready for GitHub Pages</li>
-      </ul>
-    </section>`;
+    </article>`;
 
   return layout({
     route,
-    title: `${site.name}: Free AI Prompt Tools`,
-    description: site.description,
-    body,
-    structuredData: [
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: site.name,
-        url: pathFor("/"),
-        description: site.description
-      }
-    ]
-  });
-};
-
-const promptForm = (tool) => `
-  <div class="field-grid">
-    <label>Topic or task
-      <input data-role="topic" value="${html(tool.example.topic || "")}" placeholder="Describe the task you want help with">
-    </label>
-    <label>Tone
-      <select data-role="tone">
-        <option>Clear and practical</option>
-        <option>Friendly and concise</option>
-        <option>Expert and analytical</option>
-        <option>Creative and exploratory</option>
-      </select>
-    </label>
-    <label>Output format
-      <select data-role="format">
-        <option>Checklist</option>
-        <option>Step-by-step plan</option>
-        <option>Table</option>
-        <option>Draft text</option>
-      </select>
-    </label>
-    <label class="wide">Extra context
-      <textarea data-role="context" rows="5" placeholder="Audience, constraints, examples, or details">${html(tool.example.context || "")}</textarea>
-    </label>
-  </div>`;
-
-const imagePromptForm = (tool) => `
-  <div class="field-grid">
-    <label>Subject
-      <input data-role="subject" value="${html(tool.example.subject || "")}" placeholder="Main subject of the image">
-    </label>
-    <label>Style
-      <select data-role="style">
-        <option>Realistic editorial photo</option>
-        <option>Cinematic concept art</option>
-        <option>Clean product render</option>
-        <option>Minimal poster design</option>
-      </select>
-    </label>
-    <label>Lighting
-      <select data-role="lighting">
-        <option>Soft natural light</option>
-        <option>High contrast studio light</option>
-        <option>Golden hour</option>
-        <option>Moody low light</option>
-      </select>
-    </label>
-    <label class="wide">Details
-      <textarea data-role="context" rows="5" placeholder="Composition, camera, colors, mood, and details to avoid">${html(tool.example.context || "")}</textarea>
-    </label>
-  </div>`;
-
-const tokenCounterForm = (tool) => `
-  <label class="wide">Text to estimate
-    <textarea data-role="source" rows="10" placeholder="Paste text here">${html(tool.example.text || "")}</textarea>
-  </label>
-  <div class="metric-grid" aria-live="polite">
-    <div><span data-metric="tokens">0</span><small>Estimated tokens</small></div>
-    <div><span data-metric="words">0</span><small>Words</small></div>
-    <div><span data-metric="chars">0</span><small>Characters</small></div>
-    <div><span data-metric="reading">0 min</span><small>Reading time</small></div>
-  </div>`;
-
-const textCleanerForm = (tool) => `
-  <label class="wide">Messy text
-    <textarea data-role="source" rows="10" placeholder="Paste text here">${html(tool.example.text || "")}</textarea>
-  </label>
-  <fieldset class="option-row">
-    <legend>Cleanup options</legend>
-    <label><input type="checkbox" data-option="trimLines" checked> Trim lines</label>
-    <label><input type="checkbox" data-option="collapseSpaces" checked> Collapse spaces</label>
-    <label><input type="checkbox" data-option="normalizeQuotes" checked> Normalize quotes</label>
-    <label><input type="checkbox" data-option="blankLines" checked> Reduce blank lines</label>
-  </fieldset>`;
-
-const formForTool = (tool) => {
-  if (tool.type === "imagePrompt") return imagePromptForm(tool);
-  if (tool.type === "tokenCounter") return tokenCounterForm(tool);
-  if (tool.type === "textCleaner") return textCleanerForm(tool);
-  return promptForm(tool);
-};
-
-const renderTool = (tool) => {
-  const route = `/tools/${tool.slug}/`;
-  const related = tool.related.map(getTool).filter(Boolean);
-  const body = `
-    <section class="tool-hero">
-      <p class="eyebrow">${html(tool.primaryKeyword)}</p>
-      <h1>${html(tool.h1)}</h1>
-      <p>${html(tool.intro)}</p>
-    </section>
-    <section class="tool-shell" data-tool="${html(tool.slug)}">
-      <div class="tool-inputs">
-        ${formForTool(tool)}
-        <div class="action-row">
-          <button class="button primary" type="button" data-action="generate">Generate</button>
-          <button class="button secondary" type="button" data-action="example">Example</button>
-          <button class="button secondary" type="button" data-action="clear">Clear</button>
-        </div>
-      </div>
-      <div class="tool-output">
-        <div class="output-head">
-          <h2>Result</h2>
-          <button class="copy-button" type="button" data-action="copy">Copy</button>
-        </div>
-        <textarea data-role="output" rows="14" readonly placeholder="Your result will appear here"></textarea>
-        <p class="status" data-role="status" aria-live="polite"></p>
-      </div>
-    </section>
-    <section class="section split-section">
-      <div>
-        <h2>How to use this tool</h2>
-        <p>Start with a concrete task, add the audience or situation, choose a format, then copy the result into your AI assistant or editor.</p>
-      </div>
-      <ul class="plain-list">
-        <li>Keep private data out of prompts.</li>
-        <li>Review all generated output before using it.</li>
-        <li>Adjust examples and constraints for your real task.</li>
-      </ul>
-    </section>
-    <section class="section">
-      <div class="section-head">
-        <h2>Frequently asked questions</h2>
-      </div>
-      <div class="faq-list">
-        ${tool.faqs
-          .map(
-            (faq) => `<details><summary>${html(faq.q)}</summary><p>${html(faq.a)}</p></details>`
-          )
-          .join("\n")}
-      </div>
-    </section>
-    <section class="section">
-      <div class="section-head">
-        <h2>Related tools</h2>
-      </div>
-      <div class="tool-grid compact">
-        ${related.map(toolCard).join("\n")}
-      </div>
-    </section>`;
-
-  return layout({
-    route,
-    title: `${tool.title}: Free Online Tool`,
-    description: tool.description,
+    title: `${guide.title}: ${site.name}`,
+    description: guide.description,
     body,
     structuredData: [
       breadcrumb([
         { name: "Home", route: "/" },
-        { name: tool.title, route }
+        { name: "Guides", route: "/guides/" },
+        { name: guide.title, route }
       ]),
-      softwareJsonLd(tool, route),
-      faqJsonLd(tool.faqs)
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: guide.title,
+        description: guide.description,
+        datePublished: guide.updated,
+        dateModified: guide.updated,
+        author: {
+          "@type": "Organization",
+          name: site.author
+        },
+        publisher: {
+          "@type": "Organization",
+          name: site.author
+        },
+        mainEntityOfPage: pathFor(route)
+      },
+      faqJsonLd(faqs)
     ]
   });
 };
@@ -400,18 +726,20 @@ const renderStaticPage = (page) => {
   const route = `/${page.slug}/`;
   const body = `
     <section class="content-page">
-      <p class="eyebrow">${html(site.name)}</p>
-      <h1>${html(page.h1)}</h1>
-      ${page.body
-        .map((paragraph) =>
-          `<p>${html(paragraph.replaceAll("{{contactEmail}}", site.contactEmail))}</p>`
-        )
-        .join("\n")}
+      <div class="content-inner">
+        <p class="eyebrow">${html(site.name)}</p>
+        <h1>${html(page.h1)}</h1>
+        ${page.body
+          .map((paragraph) =>
+            `<p>${html(paragraph.replaceAll("{{contactEmail}}", site.contactEmail))}</p>`
+          )
+          .join("\n")}
+      </div>
     </section>`;
 
   return layout({
     route,
-    title: `${page.title}: ${site.name}`,
+    title: `${page.title}: ${site.author}`,
     description: page.description,
     body,
     structuredData: [
@@ -423,11 +751,49 @@ const renderStaticPage = (page) => {
   });
 };
 
+const renderNotFound = () => {
+  const route = "/404/";
+  const body = `
+    <section class="content-page not-found-page">
+      <div class="content-inner">
+        <p class="eyebrow">404</p>
+        <h1>This scene is outside the camera frustum.</h1>
+        <p>The page you requested is not available. Return to the lab entrance, browse the guides, or run the WebGL scene checklist if you were looking for a debugging path.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="${routeUrl("/")}">Go home</a>
+          <a class="button secondary" href="${routeUrl("/guides/")}">Browse guides</a>
+          <a class="button secondary" href="${routeUrl("/webgl-scene-health-check/")}">Run checklist</a>
+        </div>
+      </div>
+    </section>`;
+
+  return layout({
+    route,
+    title: `Page Not Found: ${site.name}`,
+    description:
+      "The requested page was not found. Return to Three.js Lab tools, guides, and the WebGL scene health checklist.",
+    body,
+    structuredData: [
+      breadcrumb([
+        { name: "Home", route: "/" },
+        { name: "404", route }
+      ])
+    ]
+  });
+};
+
 const allRoutes = () => [
   "/",
-  ...tools.map((tool) => `/tools/${tool.slug}/`),
-  ...pages.map((page) => `/${page.slug}/`)
+  "/tools/",
+  "/webgl-scene-health-check/",
+  "/resources/",
+  "/guides/",
+  ...guides.map((guide) => `/guides/${guide.slug}/`),
+  ...pages.map((page) => `/${page.slug}/`),
+  "/404/"
 ];
+
+const sitemapRoutes = () => allRoutes().filter((route) => route !== "/404/");
 
 const robots = () => `User-agent: *
 Allow: /
@@ -437,7 +803,7 @@ Sitemap: ${pathFor("/sitemap.xml")}
 
 const sitemap = () => `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allRoutes()
+${sitemapRoutes()
   .map(
     (route) => `  <url>
     <loc>${html(pathFor(route))}</loc>
@@ -468,14 +834,22 @@ const build = async () => {
 
   await copyAssets();
   await writeRoute("/", renderHome());
+  await writeRoute("/tools/", renderToolsIndex());
+  await writeRoute("/webgl-scene-health-check/", renderHealthCheck());
+  await writeRoute("/resources/", renderResources());
+  await writeRoute("/guides/", renderGuideIndex());
 
-  for (const tool of tools) {
-    await writeRoute(`/tools/${tool.slug}/`, renderTool(tool));
+  for (const guide of guides) {
+    await writeRoute(`/guides/${guide.slug}/`, renderGuide(guide));
   }
 
   for (const page of pages) {
     await writeRoute(`/${page.slug}/`, renderStaticPage(page));
   }
+
+  const notFound = renderNotFound();
+  await writeRoute("/404/", notFound);
+  await writeFile(path.join(distDir, "404.html"), notFound, "utf8");
 
   await writeFile(path.join(distDir, "robots.txt"), robots(), "utf8");
   await writeFile(path.join(distDir, "sitemap.xml"), sitemap(), "utf8");

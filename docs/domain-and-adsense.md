@@ -6,7 +6,7 @@ This file lists the manual steps needed to move the MVP from a local static site
 
 - Final domain, for example `vavist.com`
 - GitHub username and repository name
-- Google Analytics Measurement ID, for example `G-XXXXXXXXXX`
+- Google Analytics Measurement ID, for example `G-48SYW15X9Z`
 - Google Search Console verification method
 - Google AdSense publisher ID, for example `pub-0000000000000000`
 - AdSense `ads.txt` line, for example `google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0`
@@ -45,7 +45,7 @@ Manual stop point: you must use your Google account.
 3. Build with:
 
 ```powershell
-$env:GA_MEASUREMENT_ID="G-XXXXXXXXXX"
+$env:GA_MEASUREMENT_ID="G-48SYW15X9Z"
 npm run build
 ```
 

@@ -1,25 +1,25 @@
 export const pages = [
   {
     slug: "about",
-    title: "About PromptMint",
-    h1: "About PromptMint",
+    title: "About Three.js Lab",
+    h1: "About Three.js Lab",
     description:
-      "Learn why PromptMint offers simple browser-based AI prompt tools for writers, students, marketers, and creators.",
+      "Learn how Vavist uses Three.js Lab as a practical browser-first workspace for WebGL builders.",
     body: [
-      "PromptMint is a small independent tool site focused on practical AI workflows. The goal is simple: help people write clearer prompts, prepare cleaner text, and understand prompt length before opening an AI assistant.",
-      "The tools are intentionally lightweight. They run in your browser, require no sign-up, and do not upload your input to a server.",
-      "This MVP starts with a focused set of AI prompt and text utilities. More tools will be added only when search data and user behavior show that they are useful."
+      "Three.js Lab is Vavist's front door for small, focused WebGL utilities. It is built for people who need to inspect a model, frame a scene, copy a shader starter, or test lighting without opening a heavy workflow.",
+      "The lab keeps the core work in the browser. GLB previews, camera math, lighting recipes, and shader snippets are designed to be fast, transparent, and useful before a full production scene exists.",
+      "Vavist will keep this site focused on Three.js, browser graphics, and compact utilities for people building interactive scenes."
     ]
   },
   {
     slug: "contact",
-    title: "Contact PromptMint",
-    h1: "Contact PromptMint",
+    title: "Contact Three.js Lab",
+    h1: "Contact Three.js Lab",
     description:
-      "Contact PromptMint with feedback, bug reports, tool suggestions, and partnership questions.",
+      "Contact Vavist with Three.js Lab feedback, bug reports, example requests, and collaboration questions.",
     body: [
-      "Questions, corrections, and tool suggestions are welcome.",
-      "Email us at {{contactEmail}}. Please avoid sending private, sensitive, medical, legal, or financial information."
+      "Feedback, bug reports, and requests for focused Three.js examples are welcome.",
+      "Email {{contactEmail}} with the page, browser, device, and a short description of what you expected to happen. Please avoid sending private or sensitive project files unless we have agreed on a secure path first."
     ]
   },
   {
@@ -27,14 +27,13 @@ export const pages = [
     title: "Privacy Policy",
     h1: "Privacy Policy",
     description:
-      "Read the PromptMint privacy policy for analytics, cookies, browser-only tools, advertising, and contact information.",
+      "Read the Three.js Lab privacy policy for local browser tools, analytics, cookies, advertising, and contact information.",
     body: [
-      "PromptMint is designed to work without accounts. Tool input is processed in your browser and is not intentionally sent to our servers.",
-      "We may use Google Analytics to understand traffic sources, popular pages, device categories, and general usage patterns. Google Analytics may use cookies or similar technologies according to Google's policies.",
-      "If advertising is enabled after approval, Google AdSense or other advertising partners may use cookies to serve and measure ads. These partners may use information from visits to this and other sites to personalize or measure advertising where allowed by law.",
-      "We may publish an ads.txt file to identify authorized advertising sellers for this site.",
-      "If you contact us by email, we use your message only to respond to your request, improve the site, or handle a related support issue.",
-      "You can control cookies through your browser settings. Some privacy tools may block analytics or advertising scripts.",
+      "Three.js Lab is designed around browser-side tools. Files selected in tools such as a GLB viewer should be processed locally in the browser unless a page clearly says otherwise.",
+      "We may use analytics to understand traffic sources, popular pages, device categories, and general usage patterns. Analytics may use cookies or similar technologies according to the provider's policies.",
+      "If advertising is enabled after approval, advertising partners may use cookies to serve, measure, or personalize ads where allowed by law.",
+      "If you contact us by email, we use your message to respond, improve the site, or handle a related support issue.",
+      "You can control cookies through your browser settings. Some privacy tools may block analytics or advertising scripts without preventing the static site from loading.",
       "Contact: {{contactEmail}}"
     ]
   },
@@ -43,13 +42,13 @@ export const pages = [
     title: "Terms of Use",
     h1: "Terms of Use",
     description:
-      "Review the terms for using PromptMint's free AI prompt and text tools.",
+      "Review the terms for using Three.js Lab pages, examples, and browser-based WebGL utilities.",
     body: [
-      "PromptMint provides free browser-based tools for general productivity and educational use.",
-      "The tools are provided as-is without warranties. You are responsible for reviewing generated prompts, cleaned text, and token estimates before relying on them.",
-      "Do not use the site for unlawful activity, abuse, spam, infringement, or attempts to bypass platform rules.",
-      "Avoid entering confidential, sensitive, medical, legal, financial, or personal information into any AI workflow unless you understand the privacy implications.",
-      "We may update, remove, or change tools and content as the site evolves."
+      "Three.js Lab provides free browser-based tools, examples, and guides for general educational and production-prep use.",
+      "The tools and examples are provided as-is without warranties. You are responsible for testing generated snippets, lighting values, camera settings, and model previews in your own project.",
+      "Do not use the site for unlawful activity, abuse, infringement, or attempts to compromise the service.",
+      "Avoid uploading, pasting, or sharing confidential files through any workflow unless you understand the privacy implications and the page clearly supports that use case.",
+      "We may update, remove, or change pages as the lab evolves."
     ]
   },
   {
@@ -57,12 +56,12 @@ export const pages = [
     title: "Cookie Policy",
     h1: "Cookie Policy",
     description:
-      "Learn how PromptMint may use cookies for analytics, site measurement, and advertising after AdSense approval.",
+      "Learn how Three.js Lab may use cookies for analytics, site measurement, and advertising.",
     body: [
-      "PromptMint's core tools do not require cookies to work.",
+      "Three.js Lab's core static pages do not require cookies to load.",
       "We may use cookies or similar technologies for analytics, performance measurement, security, and advertising after those services are configured.",
-      "Google Analytics may set cookies to help us understand aggregate site usage. Google AdSense may set cookies to serve, measure, or personalize ads after advertising is enabled.",
-      "You can block or delete cookies in your browser settings. Blocking cookies may affect analytics and advertising but should not prevent the core browser tools from running."
+      "Analytics cookies help us understand aggregate site usage. Advertising cookies may be used to serve, measure, or personalize ads where allowed by law.",
+      "You can block or delete cookies in your browser settings. Blocking cookies may affect analytics or advertising but should not prevent the core pages from working."
     ]
   }
 ];

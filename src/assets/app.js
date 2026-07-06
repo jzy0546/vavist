@@ -1,253 +1,235 @@
-const $ = (root, selector) => root.querySelector(selector);
-const $$ = (root, selector) => Array.from(root.querySelectorAll(selector));
+const initMenu = () => {
+  const button = document.querySelector("[data-menu-button]");
+  const menu = document.querySelector("[data-menu]");
+  if (!button || !menu) return;
 
-const setStatus = (root, message) => {
-  const status = $(root, '[data-role="status"]');
-  if (status) status.textContent = message;
+  button.addEventListener("click", () => {
+    const expanded = button.getAttribute("aria-expanded") === "true";
+    button.setAttribute("aria-expanded", String(!expanded));
+    menu.toggleAttribute("data-open", !expanded);
+  });
 };
 
-const getValue = (root, role) => {
-  const element = $(root, `[data-role="${role}"]`);
-  return element ? element.value.trim() : "";
-};
+const initReveal = () => {
+  const elements = document.querySelectorAll("[data-reveal]");
+  if (!elements.length) return;
 
-const setOutput = (root, value) => {
-  const output = $(root, '[data-role="output"]');
-  if (output) output.value = value;
-};
-
-const promptTemplate = (root, variant) => {
-  const topic = getValue(root, "topic") || "Describe your task";
-  const tone = getValue(root, "tone") || "Clear and practical";
-  const format = getValue(root, "format") || "Checklist";
-  const context = getValue(root, "context") || "No extra context provided.";
-  const assistantName = variant === "chatgpt" ? "ChatGPT" : "an AI assistant";
-  const focus =
-    variant === "chatgpt"
-      ? "Ask one clarifying question if the request is ambiguous, then produce the answer."
-      : "Before answering, identify assumptions and choose the most useful structure.";
-
-  return `Act as ${assistantName} with strong judgment and concise communication.
-
-Task:
-${topic}
-
-Context:
-${context}
-
-Tone:
-${tone}
-
-Output format:
-${format}
-
-Instructions:
-1. ${focus}
-2. Make the response specific, practical, and easy to act on.
-3. Avoid vague advice and unsupported claims.
-4. End with a short quality check that explains what to review next.`;
-};
-
-const imagePromptTemplate = (root) => {
-  const subject = getValue(root, "subject") || "A clear main subject";
-  const style = getValue(root, "style") || "Realistic editorial photo";
-  const lighting = getValue(root, "lighting") || "Soft natural light";
-  const context = getValue(root, "context") || "Clean composition, balanced colors, realistic details.";
-
-  return `${subject}, ${style}, ${lighting}, thoughtful composition, strong focal point, natural depth, high detail.
-
-Scene details:
-${context}
-
-Camera and composition:
-eye-level view, balanced framing, clear foreground and background separation.
-
-Negative prompt:
-blurry details, distorted hands, unreadable text, cluttered layout, extra limbs, low resolution, harsh artifacts.`;
-};
-
-const normalizeWhitespace = (text, options) => {
-  let result = text;
-
-  if (options.normalizeQuotes) {
-    result = result
-      .replace(/[\u201c\u201d]/g, '"')
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/\u2026/g, "...");
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  elements.forEach((element) => element.classList.add("reveal"));
+  if (reduced || !("IntersectionObserver" in window)) {
+    elements.forEach((element) => element.classList.add("is-visible"));
+    return;
   }
 
-  if (options.trimLines) {
-    result = result
-      .split("\n")
-      .map((line) => line.trim())
-      .join("\n");
-  }
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.14 }
+  );
 
-  if (options.collapseSpaces) {
-    result = result.replace(/[ \t]{2,}/g, " ");
-  }
-
-  if (options.blankLines) {
-    result = result.replace(/\n{3,}/g, "\n\n");
-  }
-
-  return result.trim();
+  elements.forEach((element) => observer.observe(element));
 };
 
-const countText = (text) => {
-  const trimmed = text.trim();
-  const words = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
-  const chars = text.length;
-  const sentences = trimmed ? trimmed.split(/[.!?]+/).filter((item) => item.trim()).length : 0;
-  const estimatedTokens = Math.max(0, Math.ceil((chars / 4 + words * 0.75) / 2));
-  const readingMinutes = words ? Math.max(1, Math.ceil(words / 220)) : 0;
+const initHeroScene = async () => {
+  const canvas = document.querySelector("#lab-canvas");
+  if (!canvas) return;
 
-  return { words, chars, sentences, estimatedTokens, readingMinutes };
-};
+  const sceneRoot = canvas.closest("[data-scene]");
+  const THREE = await import("https://unpkg.com/three@0.185.0/build/three.module.js");
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const pointer = { x: 0, y: 0 };
 
-const updateMetrics = (root) => {
-  const text = getValue(root, "source");
-  const stats = countText(text);
-  const metrics = {
-    tokens: stats.estimatedTokens.toLocaleString(),
-    words: stats.words.toLocaleString(),
-    chars: stats.chars.toLocaleString(),
-    reading: `${stats.readingMinutes} min`
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: true,
+    preserveDrawingBuffer: true,
+    powerPreference: "high-performance"
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x10100e, 7, 18);
+
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+  camera.position.set(4.2, 2.4, 6.8);
+
+  scene.add(new THREE.HemisphereLight(0xf6efe2, 0x171612, 1.45));
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  key.position.set(4, 5, 3);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0x65d8c2, 1.6);
+  rim.position.set(-5, 2, -4);
+  scene.add(rim);
+
+  const rig = new THREE.Group();
+  rig.position.set(1.2, 0.2, 0);
+  scene.add(rig);
+
+  const knotMaterial = new THREE.MeshStandardMaterial({
+    color: 0x65d8c2,
+    roughness: 0.28,
+    metalness: 0.42
+  });
+  const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(0.86, 0.24, 180, 22), knotMaterial);
+  knot.position.y = 0.55;
+  rig.add(knot);
+
+  const shell = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1.62, 2),
+    new THREE.MeshBasicMaterial({
+      color: 0xf4efe4,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.18
+    })
+  );
+  shell.position.y = 0.55;
+  rig.add(shell);
+
+  const ringMaterial = new THREE.MeshBasicMaterial({
+    color: 0xf1ae63,
+    transparent: true,
+    opacity: 0.44
+  });
+  for (let index = 0; index < 3; index += 1) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.95 + index * 0.36, 0.008, 8, 180), ringMaterial);
+    ring.rotation.x = Math.PI / 2 + index * 0.14;
+    ring.rotation.y = index * 0.2;
+    ring.position.y = 0.12 + index * 0.05;
+    rig.add(ring);
+  }
+
+  const grid = new THREE.GridHelper(10, 20, 0x65d8c2, 0x5a5246);
+  grid.position.y = -0.95;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.28;
+  scene.add(grid);
+
+  const particleCount = 220;
+  const positions = new Float32Array(particleCount * 3);
+  for (let index = 0; index < particleCount; index += 1) {
+    positions[index * 3] = (Math.random() - 0.5) * 11;
+    positions[index * 3 + 1] = Math.random() * 5.2 - 0.9;
+    positions[index * 3 + 2] = (Math.random() - 0.5) * 8;
+  }
+  const particleGeometry = new THREE.BufferGeometry();
+  particleGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const particles = new THREE.Points(
+    particleGeometry,
+    new THREE.PointsMaterial({
+      color: 0xf4efe4,
+      size: 0.026,
+      transparent: true,
+      opacity: 0.48
+    })
+  );
+  scene.add(particles);
+
+  const resize = () => {
+    const bounds = canvas.getBoundingClientRect();
+    const width = Math.max(1, Math.floor(bounds.width));
+    const height = Math.max(1, Math.floor(bounds.height));
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
   };
 
-  Object.entries(metrics).forEach(([key, value]) => {
-    const element = $(root, `[data-metric="${key}"]`);
-    if (element) element.textContent = value;
-  });
+  const updatePointer = (event) => {
+    pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
+    pointer.y = (event.clientY / window.innerHeight - 0.5) * 2;
+  };
 
-  setOutput(
-    root,
-    `Estimated tokens: ${stats.estimatedTokens.toLocaleString()}
-Words: ${stats.words.toLocaleString()}
-Characters: ${stats.chars.toLocaleString()}
-Sentences: ${stats.sentences.toLocaleString()}
-Reading time: ${stats.readingMinutes} min`
-  );
+  resize();
+  sceneRoot?.setAttribute("data-scene-ready", "true");
+  window.addEventListener("resize", resize);
+  window.addEventListener("pointermove", updatePointer, { passive: true });
+
+  const observer = "ResizeObserver" in window ? new ResizeObserver(resize) : null;
+  observer?.observe(canvas);
+
+  const startTime = performance.now();
+  const render = () => {
+    const elapsed = (performance.now() - startTime) / 1000;
+    if (!reduced) {
+      knot.rotation.x = elapsed * 0.32;
+      knot.rotation.y = elapsed * 0.48;
+      shell.rotation.y = elapsed * 0.18;
+      particles.rotation.y = elapsed * 0.025;
+      rig.rotation.y = pointer.x * 0.22 + elapsed * 0.05;
+      rig.rotation.x = pointer.y * 0.08;
+    }
+
+    camera.lookAt(0.65, 0.28, 0);
+    renderer.render(scene, camera);
+    window.requestAnimationFrame(render);
+  };
+
+  render();
 };
 
-const generate = (root) => {
-  const tool = root.dataset.tool;
+const initHealthCheck = () => {
+  const root = document.querySelector("[data-health-check]");
+  if (!root) return;
 
-  if (tool === "ai-image-prompt-generator") {
-    setOutput(root, imagePromptTemplate(root));
-    setStatus(root, "Image prompt generated.");
-    return;
-  }
+  const items = Array.from(root.querySelectorAll("[data-health-item]"));
+  const score = root.querySelector("[data-health-score]");
+  const status = root.querySelector("[data-health-status]");
+  const meter = root.querySelector("[data-health-meter]");
+  const copyButton = root.querySelector("[data-health-copy]");
+  const message = root.querySelector("[data-health-message]");
+  const maxScore = items.reduce((sum, item) => sum + Number(item.dataset.points || 0), 0);
 
-  if (tool === "chatgpt-prompt-generator") {
-    setOutput(root, promptTemplate(root, "chatgpt"));
-    setStatus(root, "ChatGPT prompt generated.");
-    return;
-  }
+  const resultText = (percent) => {
+    if (percent >= 86) return "Strong publishing shape. Move to real-device QA and final content review.";
+    if (percent >= 70) return "Good base. Fix the unchecked items before adding more visual polish.";
+    if (percent >= 55) return "Workable, but there are enough gaps to cause review or mobile issues.";
+    return "High risk. Stabilize assets, camera, rendering, loading, and mobile behavior before publishing.";
+  };
 
-  if (tool === "ai-token-counter") {
-    updateMetrics(root);
-    setStatus(root, "Token estimate updated.");
-    return;
-  }
+  const calculate = () => {
+    const current = items
+      .filter((item) => item.checked)
+      .reduce((sum, item) => sum + Number(item.dataset.points || 0), 0);
+    const percent = Math.round((current / maxScore) * 100);
+    if (score) score.textContent = String(percent);
+    if (status) status.textContent = resultText(percent);
+    if (meter) meter.style.width = `${percent}%`;
+    return percent;
+  };
 
-  if (tool === "ai-text-cleaner") {
-    const source = getValue(root, "source");
-    const options = Object.fromEntries(
-      $$(root, "[data-option]").map((item) => [item.dataset.option, item.checked])
-    );
-    setOutput(root, normalizeWhitespace(source, options));
-    setStatus(root, "Text cleaned.");
-    return;
-  }
+  const copyRecommendations = async () => {
+    const percent = calculate();
+    const missing = items
+      .filter((item) => !item.checked)
+      .map((item) => `- ${item.dataset.label}`)
+      .join("\n");
+    const text = `WebGL scene health score: ${percent}/100\n\nNext fixes:\n${missing || "- No unchecked items. Move to real-device QA."}`;
 
-  setOutput(root, promptTemplate(root, "general"));
-  setStatus(root, "Prompt generated.");
-};
-
-const clearTool = (root) => {
-  $$(
-    root,
-    'input[data-role], textarea[data-role]:not([readonly])'
-  ).forEach((element) => {
-    element.value = "";
-  });
-  setOutput(root, "");
-  setStatus(root, "Cleared.");
-  if (root.dataset.tool === "ai-token-counter") updateMetrics(root);
-};
-
-const fillExample = (root) => {
-  const examples = {
-    "ai-prompt-generator": {
-      topic: "Create a launch checklist for a small SaaS newsletter",
-      context: "Audience is indie founders. Keep it practical and concise."
-    },
-    "chatgpt-prompt-generator": {
-      topic: "Rewrite a pricing page section for a productivity app",
-      context: "Tone should be clear, confident, and friendly."
-    },
-    "ai-image-prompt-generator": {
-      subject: "A compact desk setup for a solo developer",
-      context: "Clean product photography, natural light, realistic details."
-    },
-    "ai-token-counter": {
-      source: "Paste a draft, prompt, transcript, or research note here to estimate tokens before using an AI assistant."
-    },
-    "ai-text-cleaner": {
-      source: "  This   draft has   extra spaces.\n\n\nIt also has \"curly quotes\" and messy line breaks.  "
+    try {
+      await navigator.clipboard.writeText(text);
+      if (message) message.textContent = "Recommendations copied.";
+    } catch {
+      if (message) message.textContent = text;
     }
   };
 
-  const values = examples[root.dataset.tool] || {};
-  Object.entries(values).forEach(([role, value]) => {
-    const element = $(root, `[data-role="${role}"]`);
-    if (element) element.value = value;
-  });
-  generate(root);
+  items.forEach((item) => item.addEventListener("change", calculate));
+  copyButton?.addEventListener("click", copyRecommendations);
+  calculate();
 };
 
-const copyOutput = async (root) => {
-  const output = $(root, '[data-role="output"]');
-  if (!output || !output.value.trim()) {
-    setStatus(root, "Nothing to copy yet.");
-    return;
-  }
-
-  try {
-    await navigator.clipboard.writeText(output.value);
-    setStatus(root, "Copied to clipboard.");
-  } catch {
-    output.select();
-    document.execCommand("copy");
-    setStatus(root, "Copied.");
-  }
-};
-
-const initTool = (root) => {
-  root.addEventListener("click", (event) => {
-    const action = event.target.closest("[data-action]")?.dataset.action;
-    if (!action) return;
-
-    if (action === "generate") generate(root);
-    if (action === "clear") clearTool(root);
-    if (action === "example") fillExample(root);
-    if (action === "copy") copyOutput(root);
-  });
-
-  $$(
-    root,
-    "input, select, textarea, [data-option]"
-  ).forEach((element) => {
-    element.addEventListener("input", () => {
-      if (root.dataset.tool === "ai-token-counter") updateMetrics(root);
-    });
-    element.addEventListener("change", () => {
-      if (root.dataset.tool === "ai-token-counter") updateMetrics(root);
-    });
-  });
-
-  generate(root);
-};
-
-document.querySelectorAll(".tool-shell").forEach(initTool);
+initMenu();
+initReveal();
+initHealthCheck();
+initHeroScene().catch(() => {
+  document.querySelector("[data-scene]")?.setAttribute("data-scene-ready", "false");
+});

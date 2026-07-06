@@ -1,177 +1,134 @@
-export const tools = [
+export const labTools = [
   {
-    slug: "ai-prompt-generator",
-    type: "prompt",
-    title: "AI Prompt Generator",
-    h1: "AI Prompt Generator",
-    navLabel: "AI Prompt",
-    description:
-      "Create focused AI prompts for writing, planning, research, marketing, and everyday work.",
-    intro:
-      "Turn a rough task into a clear prompt with role, context, output format, and quality checks.",
-    primaryKeyword: "AI prompt generator",
-    example: {
-      topic: "Plan a launch checklist for a small SaaS newsletter",
-      context: "Audience is indie founders. Keep it practical and concise."
-    },
-    faqs: [
-      {
-        q: "What is an AI prompt generator?",
-        a: "It is a tool that turns a rough goal into a clearer prompt with context, constraints, and output instructions."
-      },
-      {
-        q: "Does this tool call an AI API?",
-        a: "No. It builds a reusable prompt in your browser, so there are no API keys, accounts, or server calls."
-      },
-      {
-        q: "What makes a good AI prompt?",
-        a: "A good prompt explains the role, task, audience, context, format, limits, and success criteria."
-      },
-      {
-        q: "Can I use the generated prompt in ChatGPT or Claude?",
-        a: "Yes. Copy the prompt and paste it into ChatGPT, Claude, Gemini, or another AI assistant."
-      }
-    ],
-    related: ["chatgpt-prompt-generator", "ai-token-counter", "ai-text-cleaner"]
+    name: "GLB Viewer",
+    path: "/gltf-viewer/",
+    label: "Inspect assets",
+    description: "Drop a GLB or GLTF file, read bounds, preview materials, and catch scale problems early."
   },
   {
-    slug: "ai-image-prompt-generator",
-    type: "imagePrompt",
-    title: "AI Image Prompt Generator",
-    h1: "AI Image Prompt Generator",
-    navLabel: "Image Prompt",
-    description:
-      "Build detailed AI image prompts with subject, style, composition, lighting, camera, and negative prompt notes.",
-    intro:
-      "Create image prompts for concept art, product visuals, thumbnails, and social posts.",
-    primaryKeyword: "AI image prompt generator",
-    example: {
-      subject: "A compact desk setup for a solo developer",
-      context: "Clean product photography, natural light, realistic details."
-    },
-    faqs: [
-      {
-        q: "What should an AI image prompt include?",
-        a: "Include subject, setting, style, composition, lighting, camera view, color palette, and details to avoid."
-      },
-      {
-        q: "Can I use this for Midjourney or image models?",
-        a: "Yes. The generated prompt is plain text that can be adapted for most image generation tools."
-      },
-      {
-        q: "Does this create images?",
-        a: "No. This MVP creates prompt text only. It does not generate images or use a paid image API."
-      },
-      {
-        q: "Why include a negative prompt?",
-        a: "A negative prompt helps clarify what the image should avoid, such as blurry hands, extra text, or clutter."
-      }
-    ],
-    related: ["ai-prompt-generator", "chatgpt-prompt-generator", "ai-text-cleaner"]
+    name: "Camera FOV",
+    path: "/camera-fov/",
+    label: "Frame scenes",
+    description: "Calculate perspective camera distance and field of view for objects that must fill the viewport."
   },
   {
-    slug: "chatgpt-prompt-generator",
-    type: "chatgptPrompt",
-    title: "ChatGPT Prompt Generator",
-    h1: "ChatGPT Prompt Generator",
-    navLabel: "ChatGPT Prompt",
-    description:
-      "Generate structured ChatGPT prompts for summaries, drafts, brainstorming, analysis, and editing tasks.",
-    intro:
-      "Give ChatGPT a role, a target audience, a specific output shape, and a checklist before it starts.",
-    primaryKeyword: "ChatGPT prompt generator",
-    example: {
-      topic: "Rewrite a pricing page section for a productivity app",
-      context: "Tone should be clear, confident, and friendly."
-    },
-    faqs: [
-      {
-        q: "How is this different from a generic AI prompt generator?",
-        a: "It is tuned for ChatGPT-style conversations with role framing, follow-up questions, and structured output."
-      },
-      {
-        q: "Should I paste private data into prompts?",
-        a: "Avoid pasting sensitive personal, financial, medical, or confidential business information into any AI tool."
-      },
-      {
-        q: "Can this help with writing?",
-        a: "Yes. It works well for outlines, edits, summaries, email drafts, product copy, and brainstorming."
-      },
-      {
-        q: "Is the generated prompt guaranteed to be perfect?",
-        a: "No. Treat it as a strong starting point and adjust it for your exact task and audience."
-      }
-    ],
-    related: ["ai-prompt-generator", "ai-token-counter", "ai-text-cleaner"]
+    name: "Shader Starter",
+    path: "/shader-starter/",
+    label: "Copy GLSL",
+    description: "Generate a small ShaderMaterial base with uniforms, vertex code, and a visible fragment pattern."
   },
   {
-    slug: "ai-token-counter",
-    type: "tokenCounter",
-    title: "AI Token Counter",
-    h1: "AI Token Counter",
-    navLabel: "Token Counter",
-    description:
-      "Estimate AI tokens, words, characters, sentences, and reading time before pasting text into an AI tool.",
-    intro:
-      "Quickly estimate whether your prompt or draft is short, medium, or long for common AI workflows.",
-    primaryKeyword: "AI token counter",
-    example: {
-      text: "Paste a draft, prompt, transcript, or research note here to estimate tokens before using an AI assistant."
-    },
-    faqs: [
-      {
-        q: "Is this token count exact?",
-        a: "No. It is a practical browser estimate. Exact token counts vary by model and tokenizer."
-      },
-      {
-        q: "How does the estimate work?",
-        a: "The tool combines character and word counts to provide a quick approximation for English text."
-      },
-      {
-        q: "Why count tokens before using AI?",
-        a: "Token estimates help you shorten prompts, split long inputs, and avoid pasting more text than needed."
-      },
-      {
-        q: "Does my text leave the browser?",
-        a: "No. Counting runs locally in your browser."
-      }
-    ],
-    related: ["ai-prompt-generator", "chatgpt-prompt-generator", "ai-text-cleaner"]
+    name: "Lighting Presets",
+    path: "/lighting-presets/",
+    label: "Tune previews",
+    description: "Copy practical hemisphere, key, rim, and product lighting setups for readable model previews."
   },
   {
-    slug: "ai-text-cleaner",
-    type: "textCleaner",
-    title: "AI Text Cleaner",
-    h1: "AI Text Cleaner",
-    navLabel: "Text Cleaner",
-    description:
-      "Clean messy AI drafts by trimming lines, collapsing extra spaces, normalizing quotes, and removing repeated blank lines.",
-    intro:
-      "Prepare copied AI output for editing, publishing, notes, emails, and documentation.",
-    primaryKeyword: "AI text cleaner",
-    example: {
-      text: "  This   draft has   extra spaces.\n\n\nIt also has \"curly quotes\" and messy line breaks.  "
-    },
-    faqs: [
-      {
-        q: "What does the AI Text Cleaner remove?",
-        a: "It can trim whitespace, collapse repeated spaces, normalize curly quotes, and reduce repeated blank lines."
-      },
-      {
-        q: "Does it rewrite my text?",
-        a: "No. It only cleans formatting and spacing. It does not change meaning or generate new content."
-      },
-      {
-        q: "Can I use it for copied ChatGPT output?",
-        a: "Yes. It is useful for cleaning AI drafts before pasting them into documents, CMS editors, or emails."
-      },
-      {
-        q: "Is the text uploaded anywhere?",
-        a: "No. Cleaning happens locally in the browser."
-      }
-    ],
-    related: ["ai-token-counter", "ai-prompt-generator", "chatgpt-prompt-generator"]
+    name: "Examples",
+    path: "/examples/",
+    label: "Learn patterns",
+    description: "Browse small Three.js examples that isolate one useful idea at a time."
   }
 ];
 
-export const getTool = (slug) => tools.find((tool) => tool.slug === slug);
+export const toolExplainers = [
+  {
+    name: "GLB Viewer",
+    path: "/gltf-viewer/",
+    label: "Inspect assets",
+    localUse: "Use it when a model has unknown scale, missing materials, odd pivots, or animation clips that need a quick sanity check.",
+    workflow: [
+      "Drop a GLB or GLTF file into the lab viewer.",
+      "Check bounding-box size, center, mesh count, material count, and animation clips.",
+      "Fit the camera from the computed bounds before tuning lights or UI."
+    ],
+    relatedGuides: ["three-js-gltf-loader-checklist", "fit-camera-to-object-three-js", "three-js-environment-maps-glb-viewer"]
+  },
+  {
+    name: "Camera FOV",
+    path: "/camera-fov/",
+    label: "Frame scenes",
+    localUse: "Use it when a product, avatar, or imported object needs predictable viewport coverage across desktop and mobile.",
+    workflow: [
+      "Enter object size, camera field of view, and target coverage.",
+      "Compare vertical and horizontal fit so narrow screens do not crop the model.",
+      "Copy the resulting distance into your viewer and update OrbitControls target."
+    ],
+    relatedGuides: ["fit-camera-to-object-three-js", "three-js-responsive-canvas", "three-js-orbitcontrols-damping"]
+  },
+  {
+    name: "Shader Starter",
+    path: "/shader-starter/",
+    label: "Copy GLSL",
+    localUse: "Use it when you need a visible ShaderMaterial baseline before adding textures, noise, displacement, or post effects.",
+    workflow: [
+      "Start from a shader that proves UVs, uniforms, and time animation work.",
+      "Change one uniform or formula at a time.",
+      "Keep the starter around as a known-good debug material."
+    ],
+    relatedGuides: ["three-js-shader-material-starter", "three-js-scene-debugging-checklist", "three-js-transparent-background-screenshot"]
+  },
+  {
+    name: "Lighting Presets",
+    path: "/lighting-presets/",
+    label: "Tune previews",
+    localUse: "Use it when a GLB looks black, flat, or too dramatic under the default scene lights.",
+    workflow: [
+      "Choose neutral inspection, product glossy, clay, or dark hero lighting.",
+      "Copy only the lights needed for the current scene.",
+      "Test on mobile before adding shadows or postprocessing."
+    ],
+    relatedGuides: ["three-js-lighting-product-viewer", "three-js-shadows-without-black-scenes", "three-js-color-management-pbr"]
+  },
+  {
+    name: "Examples",
+    path: "/examples/",
+    label: "Learn patterns",
+    localUse: "Use it when you want a small isolated scene before copying an idea into a larger app.",
+    workflow: [
+      "Open the smallest example that matches the problem.",
+      "Read the associated guide before combining examples.",
+      "Copy the pattern into a clean scene and measure performance early."
+    ],
+    relatedGuides: ["three-js-particles-buffergeometry", "three-js-instancing-many-objects", "three-js-raycaster-picking-checklist"]
+  }
+];
+
+export const healthChecks = [
+  {
+    group: "Assets",
+    items: [
+      { id: "bounds", label: "Object bounds are measured after load", points: 9 },
+      { id: "scale", label: "Model scale is normalized or documented", points: 8 },
+      { id: "textures", label: "Texture dimensions match the visible camera distance", points: 8 },
+      { id: "compression", label: "DRACO/KTX2 or resized assets are considered for heavy files", points: 6 }
+    ]
+  },
+  {
+    group: "Camera and interaction",
+    items: [
+      { id: "fit", label: "Camera is fitted from Box3 bounds, not guessed", points: 10 },
+      { id: "target", label: "OrbitControls target matches the object center", points: 7 },
+      { id: "limits", label: "Zoom and polar limits keep users in a useful range", points: 5 },
+      { id: "resize", label: "Renderer and camera update on responsive container changes", points: 8 }
+    ]
+  },
+  {
+    group: "Rendering",
+    items: [
+      { id: "lights", label: "Lighting preset keeps dark and glossy materials readable", points: 8 },
+      { id: "color", label: "Renderer output color space and texture color spaces are explicit", points: 8 },
+      { id: "shadows", label: "Shadows are optional, bounded, and not crushing the model", points: 5 },
+      { id: "pixelRatio", label: "Pixel ratio is clamped for mobile", points: 8 }
+    ]
+  },
+  {
+    group: "UX and reliability",
+    items: [
+      { id: "loading", label: "Loading, empty, and failed states are visible", points: 7 },
+      { id: "motion", label: "Reduced-motion and offscreen render behavior are respected", points: 6 },
+      { id: "metrics", label: "Draw calls, triangles, textures, or file size are checked before publish", points: 8 },
+      { id: "fallback", label: "The page remains useful if the WebGL demo fails", points: 6 }
+    ]
+  }
+];

@@ -1,27 +1,29 @@
 const trimSlash = (value) => value.replace(/\/+$/, "");
 
-const rawSiteUrl = process.env.SITE_URL || "http://localhost:4173";
+const rawSiteUrl = process.env.SITE_URL || "https://vavist.com";
+const rawLabUrl = process.env.LAB_URL || "https://threejs.vavist.com";
 const customDomain = (process.env.CUSTOM_DOMAIN || "").trim();
 const adsenseClient = (process.env.ADSENSE_CLIENT || "").trim();
 const adsTxtAccount = (process.env.ADS_TXT_ACCOUNT || "").trim();
-const gaMeasurementId = (process.env.GA_MEASUREMENT_ID || "").trim();
-const contactEmail = (process.env.CONTACT_EMAIL || "hello@example.com").trim();
+const gaMeasurementId = (process.env.GA_MEASUREMENT_ID || "G-48SYW15X9Z").trim();
+const contactEmail = (process.env.CONTACT_EMAIL || "hello@vavist.com").trim();
 
 export const site = {
-  name: "PromptMint",
-  tagline: "Free AI prompt tools for sharper everyday work.",
+  name: "Three.js Lab",
+  tagline: "Browser-native WebGL tools from Vavist.",
   description:
-    "Free browser-based AI prompt tools for writers, marketers, students, and creators. Generate prompts, estimate tokens, and clean AI text without sign-up.",
+    "Three.js Lab is the Vavist entrance for focused WebGL builders: GLB inspection, camera framing, shader starters, lighting recipes, and practical Three.js guides.",
   url: trimSlash(rawSiteUrl),
+  labUrl: trimSlash(rawLabUrl),
   customDomain,
   gaMeasurementId,
   adsenseClient,
   adsTxtAccount,
   contactEmail,
-  author: "PromptMint",
+  author: "Vavist",
   language: "en",
   locale: "en_US",
-  themeColor: "#1463ff"
+  themeColor: "#10100e"
 };
 
 export const pathFor = (route) => {

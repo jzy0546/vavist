@@ -1,20 +1,21 @@
-# AI Prompt Tools MVP
+# Vavist Three.js Lab Entrance
 
-A zero-dependency static MVP for testing organic search demand around free AI prompt tools.
+A zero-dependency static homepage for `vavist.com`, rebuilt as the main entrance to Three.js Lab.
 
-## MVP Scope
+## Scope
 
-- Home page
-- 5 tool pages
-  - AI Prompt Generator
-  - AI Image Prompt Generator
-  - ChatGPT Prompt Generator
-  - AI Token Counter
-  - AI Text Cleaner
+- Home page with a live Three.js hero scene
+- Launch links to the Three.js Lab tools and guides
+- Local `/guides/` index with original Three.js/WebGL articles
+- 24 guide pages covering GLTFLoader, camera fitting, shaders, lighting, particles, responsive canvas sizing, pivots, performance, color management, debugging, compression, labels, screenshots, gotchas, and static-site structure
+- `/tools/` workflow index for the external lab tools
+- `/webgl-scene-health-check/` browser-only publishing checklist
+- `/resources/` primary-source reference library
+- Custom `404.html`
 - About, Contact, Privacy Policy, Terms of Use, Cookie Policy
 - `robots.txt`, `sitemap.xml`
 - Optional `CNAME` for a custom domain
-- Optional `ads.txt` for AdSense after approval setup
+- Optional `ads.txt` for advertising setup
 
 ## Local Commands
 
@@ -32,23 +33,13 @@ Set these environment variables before building for deployment:
 
 ```powershell
 $env:SITE_URL="https://vavist.com"
+$env:LAB_URL="https://threejs.vavist.com"
 $env:CUSTOM_DOMAIN="vavist.com"
-$env:GA_MEASUREMENT_ID="G-XXXXXXXXXX"
+$env:GA_MEASUREMENT_ID="G-48SYW15X9Z"
 $env:ADSENSE_CLIENT="ca-pub-0000000000000000"
 $env:ADS_TXT_ACCOUNT="google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0"
 $env:CONTACT_EMAIL="hello@vavist.com"
 npm run build
 ```
 
-Only set `CUSTOM_DOMAIN`, `ADSENSE_CLIENT`, and `ADS_TXT_ACCOUNT` when the real values exist. Invalid AdSense placeholders should not be published.
-
-## GitHub Pages
-
-The included workflow builds `dist/` and publishes it with GitHub Pages. After pushing to GitHub:
-
-1. Go to repository Settings.
-2. Open Pages.
-3. Set Source to GitHub Actions.
-4. Run the `Deploy static site to Pages` workflow.
-
-Custom domain and AdSense setup are documented in `docs/domain-and-adsense.md`.
+Only set `CUSTOM_DOMAIN`, `ADSENSE_CLIENT`, and `ADS_TXT_ACCOUNT` when the real values exist. Invalid advertising placeholders should not be published.
