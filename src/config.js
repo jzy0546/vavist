@@ -3,7 +3,7 @@ const trimSlash = (value) => value.replace(/\/+$/, "");
 const rawSiteUrl = process.env.SITE_URL || "https://vavist.com";
 const rawLabUrl = process.env.LAB_URL || "https://threejs.vavist.com";
 const customDomain = (process.env.CUSTOM_DOMAIN || "").trim();
-const adsenseClient = (process.env.ADSENSE_CLIENT || "").trim();
+const adsenseClient = (process.env.ADSENSE_CLIENT || "ca-pub-3178114530361936").trim();
 const adsTxtAccount = (process.env.ADS_TXT_ACCOUNT || "").trim();
 const gaMeasurementId = (process.env.GA_MEASUREMENT_ID || "G-48SYW15X9Z").trim();
 const contactEmail = (process.env.CONTACT_EMAIL || "hello@vavist.com").trim();

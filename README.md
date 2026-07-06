@@ -36,7 +36,7 @@ $env:SITE_URL="https://vavist.com"
 $env:LAB_URL="https://threejs.vavist.com"
 $env:CUSTOM_DOMAIN="vavist.com"
 $env:GA_MEASUREMENT_ID="G-48SYW15X9Z"
-$env:ADSENSE_CLIENT="ca-pub-0000000000000000"
+$env:ADSENSE_CLIENT="ca-pub-3178114530361936"
 $env:ADS_TXT_ACCOUNT="google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0"
 $env:CONTACT_EMAIL="hello@vavist.com"
 npm run build
