@@ -448,6 +448,12 @@ ${allRoutes()
 </urlset>
 `;
 
+const adsTxt = () => {
+  if (!site.adsTxtAccount) return "";
+  if (site.adsTxtAccount.includes(",")) return `${site.adsTxtAccount}\n`;
+  return `google.com, ${site.adsTxtAccount}, DIRECT, f08c47fec0942fa0\n`;
+};
+
 const copyAssets = async () => {
   const outputAssets = path.join(distDir, "assets");
   await mkdir(outputAssets, { recursive: true });
@@ -479,7 +485,7 @@ const build = async () => {
   }
 
   if (site.adsTxtAccount) {
-    await writeFile(path.join(distDir, "ads.txt"), `${site.adsTxtAccount}\n`, "utf8");
+    await writeFile(path.join(distDir, "ads.txt"), adsTxt(), "utf8");
   }
 
   console.log(`Built ${allRoutes().length} pages in dist/`);
