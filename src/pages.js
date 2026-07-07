@@ -1,7 +1,7 @@
 export const pages = [
   {
     slug: "about",
-    title: "About Three.js Lab",
+    title: "About Three.js Lab and Vavist WebGL Tools",
     h1: "About Three.js Lab",
     description:
       "Learn how Vavist uses Three.js Lab as a practical browser-first workspace for WebGL builders.",
@@ -13,7 +13,7 @@ export const pages = [
   },
   {
     slug: "contact",
-    title: "Contact Three.js Lab",
+    title: "Contact Three.js Lab for WebGL Tool Feedback",
     h1: "Contact Three.js Lab",
     description:
       "Contact Vavist with Three.js Lab feedback, bug reports, example requests, and collaboration questions.",
@@ -24,7 +24,7 @@ export const pages = [
   },
   {
     slug: "privacy-policy",
-    title: "Privacy Policy",
+    title: "Privacy Policy for Three.js Lab",
     h1: "Privacy Policy",
     description:
       "Read the Three.js Lab privacy policy for local browser tools, analytics, cookies, advertising, and contact information.",
@@ -39,7 +39,7 @@ export const pages = [
   },
   {
     slug: "terms-of-use",
-    title: "Terms of Use",
+    title: "Terms of Use for Three.js Lab Tools",
     h1: "Terms of Use",
     description:
       "Review the terms for using Three.js Lab pages, examples, and browser-based WebGL utilities.",
@@ -53,7 +53,7 @@ export const pages = [
   },
   {
     slug: "cookie-policy",
-    title: "Cookie Policy",
+    title: "Cookie Policy for Three.js Lab",
     h1: "Cookie Policy",
     description:
       "Learn how Three.js Lab may use cookies for analytics, site measurement, and advertising.",

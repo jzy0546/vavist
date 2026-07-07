@@ -78,12 +78,26 @@ const checkHtml = async (filePath) => {
   const relative = path.relative(distDir, filePath);
 
   if (!/<title>[^<]+<\/title>/.test(content)) fail(`${relative} is missing title`);
+  const title = content.match(/<title>([^<]+)<\/title>/)?.[1] || "";
+  if (title.length < 30 || title.length > 70) {
+    fail(`${relative} title should be 30-70 characters, found ${title.length}`);
+  }
+
   if (!/<meta name="description" content="[^"]+">/.test(content)) {
     fail(`${relative} is missing meta description`);
   }
-  if (!/<h1[^>]*>[^<]+<\/h1>/.test(content)) fail(`${relative} is missing h1`);
+  const description = content.match(/<meta name="description" content="([^"]+)">/)?.[1] || "";
+  if (description.length < 80 || description.length > 170) {
+    fail(`${relative} description should be 80-170 characters, found ${description.length}`);
+  }
+
+  const h1s = [...content.matchAll(/<h1\b[^>]*>[\s\S]*?<\/h1>/g)];
+  if (h1s.length !== 1) fail(`${relative} should have exactly one h1, found ${h1s.length}`);
   if (!/<link rel="canonical" href="[^"]+">/.test(content)) {
     fail(`${relative} is missing canonical`);
+  }
+  if (!/<meta name="robots" content="index,follow">/.test(content)) {
+    fail(`${relative} is missing index,follow robots meta`);
   }
   if (/noindex/i.test(content)) fail(`${relative} contains noindex`);
 

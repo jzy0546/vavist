@@ -134,6 +134,7 @@ const layout = ({ route, title, description, body, structuredData = [] }) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${html(title)}</title>
   <meta name="description" content="${html(description)}">
+  <meta name="robots" content="index,follow">
   <link rel="canonical" href="${html(canonical)}">
   <meta name="theme-color" content="${html(site.themeColor)}">
   <meta property="og:type" content="website">
@@ -142,6 +143,9 @@ const layout = ({ route, title, description, body, structuredData = [] }) => {
   <meta property="og:title" content="${html(title)}">
   <meta property="og:description" content="${html(description)}">
   <meta property="og:url" content="${html(canonical)}">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="${html(title)}">
+  <meta name="twitter:description" content="${html(description)}">
   <link rel="icon" href="${routeUrl("/assets/site-icon.svg")}" type="image/svg+xml">
   <link rel="stylesheet" href="${routeUrl("/assets/styles.css")}">
   ${analyticsScript()}
@@ -289,7 +293,7 @@ const renderHome = () => {
 
   return layout({
     route,
-    title: "Three.js Lab: Vavist WebGL Tools",
+    title: "Three.js Lab Guides and WebGL Tools by Vavist",
     description: site.description,
     body,
     structuredData: [
@@ -322,7 +326,7 @@ const renderGuideIndex = () => {
 
   return layout({
     route,
-    title: "Three.js Guides: Vavist WebGL Notes",
+    title: "Three.js Guides for WebGL Builders and Tool Pages",
     description:
       "Read original Three.js guides for GLTFLoader, camera fitting, ShaderMaterial, lighting, particles, responsive canvas sizing, performance, and debugging.",
     body,
@@ -382,7 +386,7 @@ const renderToolsIndex = () => {
 
   return layout({
     route,
-    title: "Three.js Tools: Vavist Lab Index",
+    title: "Three.js Tools for GLB, Camera, Shaders and Lighting",
     description:
       "Use the Vavist Three.js tool index to choose a GLB viewer, camera FOV calculator, ShaderMaterial starter, lighting presets, examples, and a WebGL health checklist.",
     body,
@@ -691,7 +695,7 @@ const renderGuide = (guide) => {
 
   return layout({
     route,
-    title: `${guide.title}: ${site.name}`,
+    title: guide.title,
     description: guide.description,
     body,
     structuredData: [
@@ -739,7 +743,7 @@ const renderStaticPage = (page) => {
 
   return layout({
     route,
-    title: `${page.title}: ${site.author}`,
+    title: page.title,
     description: page.description,
     body,
     structuredData: [
@@ -769,7 +773,7 @@ const renderNotFound = () => {
 
   return layout({
     route,
-    title: `Page Not Found: ${site.name}`,
+    title: "Page Not Found: Three.js Lab and Vavist",
     description:
       "The requested page was not found. Return to Three.js Lab tools, guides, and the WebGL scene health checklist.",
     body,
