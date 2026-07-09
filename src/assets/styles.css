@@ -355,6 +355,54 @@ h2 {
   margin-top: 32px;
 }
 
+.hero-router {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: min(900px, 100%);
+  margin-top: 22px;
+}
+
+.problem-route {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgb(16 16 14 / 0.58);
+  backdrop-filter: blur(12px);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.problem-route:hover,
+.problem-route:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgb(101 216 194 / 0.5);
+  background: rgb(30 28 23 / 0.78);
+  outline: none;
+}
+
+.problem-route span {
+  color: var(--accent-warm);
+  font-size: 0.76rem;
+  font-weight: 760;
+}
+
+.problem-route strong {
+  color: var(--paper);
+  line-height: 1.16;
+}
+
+.problem-route small {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.42;
+}
+
 .section-actions {
   display: flex;
   margin-top: 28px;
@@ -987,6 +1035,39 @@ h2 {
   margin-top: 48px;
 }
 
+.article-next-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(18px, 4vw, 42px);
+  align-items: center;
+  border: 1px solid rgb(101 216 194 / 0.32);
+  border-radius: 8px;
+  padding: clamp(20px, 3vw, 28px);
+  margin-bottom: 34px;
+  background:
+    linear-gradient(120deg, rgb(101 216 194 / 0.12), rgb(241 174 99 / 0.06)),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.article-next-step h2 {
+  max-width: 720px;
+  font-size: clamp(1.5rem, 3.4vw, 2.55rem);
+}
+
+.article-next-step p:not(.eyebrow) {
+  max-width: 68ch;
+  margin: 14px 0 0;
+  color: var(--paper-muted);
+}
+
+.article-next-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .article-section {
   border-top: 1px solid var(--line-soft);
   padding-top: 34px;
@@ -1231,6 +1312,8 @@ h2 {
   .launch-grid,
   .guide-grid,
   .article-neighbors,
+  .hero-router,
+  .article-next-step,
   .resource-grid,
   .process-grid,
   .article-shell,
@@ -1254,6 +1337,10 @@ h2 {
 
   .article-body {
     margin-top: 10px;
+  }
+
+  .article-next-step-actions {
+    justify-content: flex-start;
   }
 
   .launch-card,

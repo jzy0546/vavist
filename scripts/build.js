@@ -72,13 +72,39 @@ const analyticsScript = () => {
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', '${id}');
+      gtag('config', '${id}', { transport_type: 'beacon' });
     </script>`;
 };
 
 const adsenseScript = () => {
   if (!site.adsenseClient) return "";
   return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${html(site.adsenseClient)}" crossorigin="anonymous"></script>`;
+};
+
+const webPageJsonLd = ({ route, title, description }) => ({
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "@id": `${pathFor(route)}#webpage`,
+  url: pathFor(route),
+  name: title,
+  description,
+  inLanguage: site.language,
+  isPartOf: {
+    "@type": "WebSite",
+    name: site.name,
+    url: pathFor("/")
+  }
+});
+
+const analyticsAttrs = ({ event, label, destination = "" }) => {
+  const attributes = [
+    `data-analytics-event="${html(event)}"`,
+    `data-analytics-label="${html(label)}"`
+  ];
+  if (destination) {
+    attributes.push(`data-analytics-destination="${html(destination)}"`);
+  }
+  return ` ${attributes.join(" ")}`;
 };
 
 const nav = () => `
@@ -98,7 +124,11 @@ const nav = () => `
         <a href="${routeUrl("/guides/")}">Guides</a>
         <a href="${routeUrl("/resources/")}">Resources</a>
         <a href="${routeUrl("/about/")}">About</a>
-        <a class="nav-cta" href="${html(labHref("/"))}">Open lab</a>
+        <a class="nav-cta" href="${html(labHref("/"))}"${analyticsAttrs({
+          event: "open_lab_tool",
+          label: "nav_open_lab",
+          destination: labHref("/")
+        })}>Open lab</a>
       </div>
     </nav>
   </header>`;
@@ -126,7 +156,9 @@ const footer = () => `
 
 const layout = ({ route, title, description, body, structuredData = [] }) => {
   const canonical = pathFor(route);
-  const ldScripts = structuredData.map(jsonLdScript).join("\n");
+  const ldScripts = [webPageJsonLd({ route, title, description }), ...structuredData]
+    .map(jsonLdScript)
+    .join("\n");
   return `<!doctype html>
 <html lang="${html(site.language)}">
 <head>
@@ -200,17 +232,63 @@ const guideItemList = (items, name) => ({
 });
 
 const toolCard = (tool, index) => `
-  <a class="launch-card launch-card-${index + 1}" href="${html(labHref(tool.path))}" data-reveal>
+  <a class="launch-card launch-card-${index + 1}" href="${html(labHref(tool.path))}"${analyticsAttrs({
+    event: "open_lab_tool",
+    label: tool.name,
+    destination: labHref(tool.path)
+  })} data-reveal>
     <span>${html(tool.label)}</span>
     <strong>${html(tool.name)}</strong>
     <small>${html(tool.description)}</small>
   </a>`;
 
 const guideCard = (guide) => `
-  <a class="guide-card" href="${routeUrl(`/guides/${guide.slug}/`)}" data-reveal>
+  <a class="guide-card" href="${routeUrl(`/guides/${guide.slug}/`)}"${analyticsAttrs({
+    event: "open_guide",
+    label: guide.slug,
+    destination: pathFor(`/guides/${guide.slug}/`)
+  })} data-reveal>
     <small>${html(guide.minutes)} min read · ${html(guide.tags[0])}</small>
     <strong>${html(guide.title)}</strong>
     <span>${html(guide.summary)}</span>
+  </a>`;
+
+const homeProblemRoutes = [
+  {
+    label: "Model looks wrong",
+    title: "Inspect a GLB",
+    description: "Open the viewer when scale, pivots, materials, or animation clips need a fast read.",
+    href: labHref("/gltf-viewer/"),
+    event: "open_lab_tool",
+    eventLabel: "home_problem_glb_viewer"
+  },
+  {
+    label: "Object will not fit",
+    title: "Frame the camera",
+    description: "Use bounds and field-of-view math before guessing another camera distance.",
+    href: routeUrl("/guides/fit-camera-to-object-three-js/"),
+    event: "open_guide",
+    eventLabel: "home_problem_camera_fit"
+  },
+  {
+    label: "Ready to ship",
+    title: "Run the scene check",
+    description: "Score loading, mobile performance, camera, lighting, and fallback quality.",
+    href: routeUrl("/webgl-scene-health-check/"),
+    event: "start_health_check",
+    eventLabel: "home_problem_health_check"
+  }
+];
+
+const problemRouteCard = (item) => `
+  <a class="problem-route" href="${html(item.href)}"${analyticsAttrs({
+    event: item.event,
+    label: item.eventLabel,
+    destination: item.href
+  })}>
+    <span>${html(item.label)}</span>
+    <strong>${html(item.title)}</strong>
+    <small>${html(item.description)}</small>
   </a>`;
 
 const renderHome = () => {
@@ -229,9 +307,24 @@ const renderHome = () => {
         <h1 id="home-title">Three.js Lab</h1>
         <p class="hero-text">A browser-native workspace for inspecting GLB files, framing cameras, tuning shaders, and copying practical Three.js patterns.</p>
         <div class="hero-actions">
-          <a class="button primary" href="${html(labHref("/gltf-viewer/"))}">Open GLB viewer</a>
-          <a class="button secondary" href="${routeUrl("/webgl-scene-health-check/")}">Run scene check</a>
-          <a class="button secondary" href="${routeUrl("/guides/")}">Browse guides</a>
+          <a class="button primary" href="${html(labHref("/gltf-viewer/"))}"${analyticsAttrs({
+            event: "open_lab_tool",
+            label: "hero_glb_viewer",
+            destination: labHref("/gltf-viewer/")
+          })}>Open GLB viewer</a>
+          <a class="button secondary" href="${routeUrl("/webgl-scene-health-check/")}"${analyticsAttrs({
+            event: "start_health_check",
+            label: "hero_scene_check",
+            destination: pathFor("/webgl-scene-health-check/")
+          })}>Run scene check</a>
+          <a class="button secondary" href="${routeUrl("/guides/")}"${analyticsAttrs({
+            event: "open_guide_index",
+            label: "hero_guides",
+            destination: pathFor("/guides/")
+          })}>Browse guides</a>
+        </div>
+        <div class="hero-router" aria-label="Start with a Three.js problem">
+          ${homeProblemRoutes.map(problemRouteCard).join("\n")}
         </div>
         <dl class="hero-metrics" aria-label="Lab coverage">
           <div><dt>5</dt><dd>focused tools</dd></div>
@@ -353,7 +446,11 @@ const localToolCard = (tool) => `
         ${tool.workflow.map((step) => `<li>${html(step)}</li>`).join("\n")}
       </ol>
       <div class="tool-links">
-        <a class="button primary" href="${html(labHref(tool.path))}">Open ${html(tool.name)}</a>
+        <a class="button primary" href="${html(labHref(tool.path))}"${analyticsAttrs({
+          event: "open_lab_tool",
+          label: `tools_index_${tool.name}`,
+          destination: labHref(tool.path)
+        })}>Open ${html(tool.name)}</a>
         ${tool.relatedGuides
           .map((slug) => {
             const guide = getGuide(slug);
@@ -375,8 +472,16 @@ const renderToolsIndex = () => {
         <h1>Small benches for real WebGL problems.</h1>
         <p class="hero-text">The live tools run on the Three.js Lab subdomain, but the root site explains when to use each one, what to measure, and which guide to read next.</p>
         <div class="tool-index-actions">
-          <a class="button primary" href="${routeUrl("/webgl-scene-health-check/")}">Run scene health check</a>
-          <a class="button secondary" href="${html(labHref("/"))}">Open full lab</a>
+          <a class="button primary" href="${routeUrl("/webgl-scene-health-check/")}"${analyticsAttrs({
+            event: "start_health_check",
+            label: "tools_index_health_check",
+            destination: pathFor("/webgl-scene-health-check/")
+          })}>Run scene health check</a>
+          <a class="button secondary" href="${html(labHref("/"))}"${analyticsAttrs({
+            event: "open_lab_tool",
+            label: "tools_index_full_lab",
+            destination: labHref("/")
+          })}>Open full lab</a>
         </div>
         <div class="tool-explainer-stack">
           ${toolExplainers.map(localToolCard).join("\n")}
@@ -552,6 +657,104 @@ const adjacentGuides = (guide) => {
   return { previous, next };
 };
 
+const nextStepForGuide = (guide) => {
+  const text = `${guide.slug} ${guide.title} ${guide.tags.join(" ")}`.toLowerCase();
+  if (text.includes("gltf") || text.includes("glb") || text.includes("texture") || text.includes("environment")) {
+    return {
+      eyebrow: "Related lab bench",
+      title: "Inspect the asset in the GLB Viewer",
+      description:
+        "Use the live viewer to check bounds, material readability, animation clips, and model scale before the scene becomes harder to debug.",
+      href: labHref("/gltf-viewer/"),
+      cta: "Open GLB Viewer",
+      event: "open_lab_tool",
+      label: `guide_next_step_${guide.slug}_glb_viewer`
+    };
+  }
+  if (text.includes("camera") || text.includes("responsive") || text.includes("orbitcontrols")) {
+    return {
+      eyebrow: "Related lab bench",
+      title: "Calculate the camera framing",
+      description:
+        "Move from the guide to the camera calculator when you need a repeatable distance, field of view, or viewport coverage target.",
+      href: labHref("/camera-fov/"),
+      cta: "Open Camera FOV",
+      event: "open_lab_tool",
+      label: `guide_next_step_${guide.slug}_camera_fov`
+    };
+  }
+  if (text.includes("shader")) {
+    return {
+      eyebrow: "Related lab bench",
+      title: "Start from a visible ShaderMaterial",
+      description:
+        "Use the shader starter when you want a small baseline that proves uniforms, UVs, and animation time are flowing.",
+      href: labHref("/shader-starter/"),
+      cta: "Open Shader Starter",
+      event: "open_lab_tool",
+      label: `guide_next_step_${guide.slug}_shader_starter`
+    };
+  }
+  if (text.includes("light") || text.includes("shadow") || text.includes("color")) {
+    return {
+      eyebrow: "Related lab bench",
+      title: "Compare lighting presets",
+      description:
+        "Use the lighting presets when a model is readable in code but still looks black, flat, or too dramatic in the browser.",
+      href: labHref("/lighting-presets/"),
+      cta: "Open Lighting Presets",
+      event: "open_lab_tool",
+      label: `guide_next_step_${guide.slug}_lighting_presets`
+    };
+  }
+  return {
+    eyebrow: "Publishing gate",
+    title: "Run the WebGL scene health check",
+    description:
+      "Use the checklist to score assets, camera behavior, rendering, mobile performance, loading states, and fallback content before publishing.",
+    href: routeUrl("/webgl-scene-health-check/"),
+    cta: "Run Scene Check",
+    event: "start_health_check",
+    label: `guide_next_step_${guide.slug}_health_check`
+  };
+};
+
+const renderGuideNextStep = (guide) => {
+  const step = nextStepForGuide(guide);
+  const secondary =
+    step.event === "start_health_check"
+      ? {
+          href: routeUrl("/tools/"),
+          event: "open_tools_index",
+          label: `guide_next_step_${guide.slug}_secondary_tools`,
+          destination: pathFor("/tools/"),
+          cta: "Compare lab tools"
+        }
+      : {
+          href: routeUrl("/webgl-scene-health-check/"),
+          event: "start_health_check",
+          label: `guide_next_step_${guide.slug}_secondary_health_check`,
+          destination: pathFor("/webgl-scene-health-check/"),
+          cta: "Check before publishing"
+        };
+  return `
+    <section class="article-next-step">
+      <div>
+        <p class="eyebrow">${html(step.eyebrow)}</p>
+        <h2>${html(step.title)}</h2>
+        <p>${html(step.description)}</p>
+      </div>
+      <div class="article-next-step-actions">
+        <a class="button primary" href="${html(step.href)}"${analyticsAttrs({
+          event: step.event,
+          label: step.label,
+          destination: step.href
+        })}>${html(step.cta)}</a>
+        <a class="button secondary" href="${html(secondary.href)}"${analyticsAttrs(secondary)}>${html(secondary.cta)}</a>
+      </div>
+    </section>`;
+};
+
 const faqsForGuide = (guide) => [
   {
     q: `When should I use ${guide.title}?`,
@@ -647,6 +850,7 @@ const renderGuide = (guide) => {
           ${renderToc(guide)}
         </aside>
         <div class="article-body">
+          ${renderGuideNextStep(guide)}
           ${guide.sections
             .map(
               (section) => `<section class="article-section" id="${slugText(section.heading)}">
@@ -829,6 +1033,7 @@ const copyAssets = async () => {
   await mkdir(outputAssets, { recursive: true });
   await copyFile(path.join(srcDir, "assets", "styles.css"), path.join(outputAssets, "styles.css"));
   await copyFile(path.join(srcDir, "assets", "app.js"), path.join(outputAssets, "app.js"));
+  await copyFile(path.join(srcDir, "assets", "analytics.js"), path.join(outputAssets, "analytics.js"));
   await copyFile(path.join(srcDir, "assets", "site-icon.svg"), path.join(outputAssets, "site-icon.svg"));
 };
 

@@ -33,6 +33,7 @@ jobs:
         run: npm run build
         env:
           SITE_URL: ${{ vars.SITE_URL }}
+          LAB_URL: ${{ vars.LAB_URL }}
           CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
           GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
           ADSENSE_CLIENT: ${{ vars.ADSENSE_CLIENT }}

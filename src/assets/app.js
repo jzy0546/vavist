@@ -1,3 +1,5 @@
+import { initAnalytics, initScrollDepth, sendAnalyticsEvent } from "./analytics.js";
+
 const initMenu = () => {
   const button = document.querySelector("[data-menu-button]");
   const menu = document.querySelector("[data-menu]");
@@ -48,7 +50,6 @@ const initHeroScene = async () => {
     canvas,
     antialias: true,
     alpha: true,
-    preserveDrawingBuffer: true,
     powerPreference: "high-performance"
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -155,11 +156,19 @@ const initHeroScene = async () => {
 
   const observer = "ResizeObserver" in window ? new ResizeObserver(resize) : null;
   observer?.observe(canvas);
+  let sceneVisible = true;
+  const sceneObserver =
+    "IntersectionObserver" in window
+      ? new IntersectionObserver(([entry]) => {
+          sceneVisible = Boolean(entry?.isIntersecting);
+        })
+      : null;
+  sceneObserver?.observe(canvas);
 
   const startTime = performance.now();
   const render = () => {
     const elapsed = (performance.now() - startTime) / 1000;
-    if (!reduced) {
+    if (sceneVisible && !reduced) {
       knot.rotation.x = elapsed * 0.32;
       knot.rotation.y = elapsed * 0.48;
       shell.rotation.y = elapsed * 0.18;
@@ -168,8 +177,10 @@ const initHeroScene = async () => {
       rig.rotation.x = pointer.y * 0.08;
     }
 
-    camera.lookAt(0.65, 0.28, 0);
-    renderer.render(scene, camera);
+    if (sceneVisible) {
+      camera.lookAt(0.65, 0.28, 0);
+      renderer.render(scene, camera);
+    }
     window.requestAnimationFrame(render);
   };
 
@@ -187,6 +198,8 @@ const initHealthCheck = () => {
   const copyButton = root.querySelector("[data-health-copy]");
   const message = root.querySelector("[data-health-message]");
   const maxScore = items.reduce((sum, item) => sum + Number(item.dataset.points || 0), 0);
+  const reportedScoreThresholds = new Set();
+  let started = false;
 
   const resultText = (percent) => {
     if (percent >= 86) return "Strong publishing shape. Move to real-device QA and final content review.";
@@ -206,6 +219,27 @@ const initHealthCheck = () => {
     return percent;
   };
 
+  const reportScoreThresholds = (percent) => {
+    [55, 70, 86].forEach((threshold) => {
+      if (percent < threshold || reportedScoreThresholds.has(threshold)) return;
+      reportedScoreThresholds.add(threshold);
+      sendAnalyticsEvent("health_check_score", {
+        health_score: percent,
+        health_threshold: threshold
+      });
+    });
+  };
+
+  const handleItemChange = () => {
+    if (!started) {
+      started = true;
+      sendAnalyticsEvent("health_check_started", {
+        page_location: window.location.href
+      });
+    }
+    reportScoreThresholds(calculate());
+  };
+
   const copyRecommendations = async () => {
     const percent = calculate();
     const missing = items
@@ -213,6 +247,10 @@ const initHealthCheck = () => {
       .map((item) => `- ${item.dataset.label}`)
       .join("\n");
     const text = `WebGL scene health score: ${percent}/100\n\nNext fixes:\n${missing || "- No unchecked items. Move to real-device QA."}`;
+    sendAnalyticsEvent("health_check_copy", {
+      health_score: percent,
+      unchecked_items: missing ? missing.split("\n").length : 0
+    });
 
     try {
       await navigator.clipboard.writeText(text);
@@ -222,13 +260,15 @@ const initHealthCheck = () => {
     }
   };
 
-  items.forEach((item) => item.addEventListener("change", calculate));
+  items.forEach((item) => item.addEventListener("change", handleItemChange));
   copyButton?.addEventListener("click", copyRecommendations);
   calculate();
 };
 
 initMenu();
 initReveal();
+initAnalytics();
+initScrollDepth();
 initHealthCheck();
 initHeroScene().catch(() => {
   document.querySelector("[data-scene]")?.setAttribute("data-scene-ready", "false");
