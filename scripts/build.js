@@ -4,14 +4,14 @@ import { fileURLToPath } from "node:url";
 import { site, pathFor } from "../src/config.js";
 import { healthChecks, labTools, toolExplainers } from "../src/tools.js";
 import { pages } from "../src/pages.js";
-import { getGuide, guides } from "../src/guides.js";
+import { getGuide, guides, retiredGuides } from "../src/guides.js";
 import { resourceGroups } from "../src/resources.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const distDir = path.join(rootDir, "dist");
 const srcDir = path.join(rootDir, "src");
-const buildDate = new Date().toISOString().slice(0, 10);
+const socialImage = pathFor("/assets/social-card.png");
 
 const basePath = (() => {
   try {
@@ -67,25 +67,39 @@ const analyticsScript = () => {
   if (!site.gaMeasurementId) return "";
   const id = html(site.gaMeasurementId);
   return `
-    <script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        analytics_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        wait_for_update: 500
+      });
       gtag('js', new Date());
       gtag('config', '${id}', { transport_type: 'beacon' });
+      window.__vavistAnalyticsId = '${id}';
     </script>`;
 };
 
-const adsenseScript = () => {
+const adsenseVerification = () => {
   if (!site.adsenseClient) return "";
-  return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${html(site.adsenseClient)}" crossorigin="anonymous"></script>`;
+  const client = html(site.adsenseClient);
+  return `<meta name="google-adsense-account" content="${client}">`;
 };
 
-const webPageJsonLd = ({ route, title, description }) => ({
+const adsenseScript = (adsEligible) => {
+  if (!adsEligible || site.adsenseMode !== "content" || !site.adsenseClient) return "";
+  const client = html(site.adsenseClient);
+  return `<script>window.__vavistAdsenseClient = '${client}';</script>`;
+};
+
+const webPageJsonLd = ({ route, canonical, title, description }) => ({
   "@context": "https://schema.org",
   "@type": "WebPage",
-  "@id": `${pathFor(route)}#webpage`,
-  url: pathFor(route),
+  "@id": `${canonical}#webpage`,
+  url: canonical,
   name: title,
   description,
   inLanguage: site.language,
@@ -147,6 +161,9 @@ const footer = () => `
         <a href="${routeUrl("/guides/")}">Guides</a>
         <a href="${routeUrl("/resources/")}">Resources</a>
         <a href="${routeUrl("/contact/")}">Contact</a>
+        <a href="${routeUrl("/authors/jzy/")}">Author</a>
+        <a href="${routeUrl("/editorial-policy/")}">Editorial</a>
+        <a href="${routeUrl("/corrections-policy/")}">Corrections</a>
         <a href="${routeUrl("/privacy-policy/")}">Privacy</a>
         <a href="${routeUrl("/terms-of-use/")}">Terms</a>
         <a href="${routeUrl("/cookie-policy/")}">Cookies</a>
@@ -154,9 +171,18 @@ const footer = () => `
     </div>
   </footer>`;
 
-const layout = ({ route, title, description, body, structuredData = [] }) => {
-  const canonical = pathFor(route);
-  const ldScripts = [webPageJsonLd({ route, title, description }), ...structuredData]
+const layout = ({
+  route,
+  title,
+  description,
+  body,
+  structuredData = [],
+  socialType = "website",
+  robots = "index,follow",
+  canonical = pathFor(route),
+  adsEligible = false
+}) => {
+  const ldScripts = [webPageJsonLd({ route, canonical, title, description }), ...structuredData]
     .map(jsonLdScript)
     .join("\n");
   return `<!doctype html>
@@ -166,22 +192,29 @@ const layout = ({ route, title, description, body, structuredData = [] }) => {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${html(title)}</title>
   <meta name="description" content="${html(description)}">
-  <meta name="robots" content="index,follow">
+  <meta name="robots" content="${html(robots)}">
   <link rel="canonical" href="${html(canonical)}">
   <meta name="theme-color" content="${html(site.themeColor)}">
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="${html(socialType)}">
   <meta property="og:locale" content="${html(site.locale)}">
   <meta property="og:site_name" content="${html(site.name)}">
   <meta property="og:title" content="${html(title)}">
   <meta property="og:description" content="${html(description)}">
   <meta property="og:url" content="${html(canonical)}">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="${html(socialImage)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Vavist Three.js Lab — practical browser-native WebGL tools and guides">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${html(title)}">
   <meta name="twitter:description" content="${html(description)}">
+  <meta name="twitter:image" content="${html(socialImage)}">
+  <meta name="twitter:image:alt" content="Vavist Three.js Lab — practical browser-native WebGL tools and guides">
   <link rel="icon" href="${routeUrl("/assets/site-icon.svg")}" type="image/svg+xml">
   <link rel="stylesheet" href="${routeUrl("/assets/styles.css")}">
+  ${adsenseVerification()}
   ${analyticsScript()}
-  ${adsenseScript()}
+  ${adsenseScript(adsEligible)}
   ${ldScripts}
 </head>
 <body>
@@ -298,7 +331,7 @@ const renderHome = () => {
       <div class="hero-scene" data-scene>
         <canvas id="lab-canvas" aria-label="Interactive Three.js lab object"></canvas>
         <div class="scene-fallback" aria-hidden="true">
-          <span>WebGL scene loading</span>
+          <span>Move or tap to start WebGL</span>
         </div>
       </div>
       <div class="hero-shade" aria-hidden="true"></div>
@@ -362,7 +395,7 @@ const renderHome = () => {
           <ul>
             <li>Model inspection stays in the browser.</li>
             <li>Camera and lighting values are easy to copy.</li>
-            <li>Guides target narrow Three.js search problems.</li>
+            <li>Guides document one reproducible Three.js problem at a time.</li>
           </ul>
         </div>
       </div>
@@ -372,8 +405,8 @@ const renderHome = () => {
       <div class="section-inner">
         <div class="section-head" data-reveal>
           <p class="eyebrow">Reference routes</p>
-          <h2>Guides for the problems builders actually search.</h2>
-          <p>Original notes from the lab: each guide turns a common Three.js failure mode into a practical workflow, with source links for deeper reading.</p>
+          <h2>Tested guides for recurring browser-scene failures.</h2>
+          <p>Each maintained guide records its environment, sample, measurements, known limits, and primary sources.</p>
         </div>
         <div class="guide-grid">
           ${guides.slice(0, 6).map(guideCard).join("\n")}
@@ -410,7 +443,7 @@ const renderGuideIndex = () => {
       <div class="section-inner">
         <p class="eyebrow">Three.js guides</p>
         <h1>Practical WebGL notes for builders.</h1>
-        <p class="hero-text">Original Three.js guides written for the problems that show up in real browser scenes: imports, cameras, shaders, lighting, responsive canvases, pivots, performance, and color.</p>
+        <p class="hero-text">Ten maintained Three.js guides with reproducible demos, code comparisons, recorded measurements, primary sources, and explicit browser-test limits.</p>
         <div class="guide-grid guide-grid-index">
           ${guides.map(guideCard).join("\n")}
         </div>
@@ -470,18 +503,18 @@ const renderToolsIndex = () => {
       <div class="section-inner">
         <p class="eyebrow">Three.js tools</p>
         <h1>Small benches for real WebGL problems.</h1>
-        <p class="hero-text">The live tools run on the Three.js Lab subdomain, but the root site explains when to use each one, what to measure, and which guide to read next.</p>
+        <p class="hero-text">The live tools run on this domain. Each workflow explains what to enter, what to measure, which limitation matters, and which tested guide to read next.</p>
         <div class="tool-index-actions">
           <a class="button primary" href="${routeUrl("/webgl-scene-health-check/")}"${analyticsAttrs({
             event: "start_health_check",
             label: "tools_index_health_check",
             destination: pathFor("/webgl-scene-health-check/")
           })}>Run scene health check</a>
-          <a class="button secondary" href="${html(labHref("/"))}"${analyticsAttrs({
+          <a class="button secondary" href="${html(labHref("/gltf-viewer/"))}"${analyticsAttrs({
             event: "open_lab_tool",
             label: "tools_index_full_lab",
-            destination: labHref("/")
-          })}>Open full lab</a>
+            destination: labHref("/gltf-viewer/")
+          })}>Open GLB Viewer</a>
         </div>
         <div class="tool-explainer-stack">
           ${toolExplainers.map(localToolCard).join("\n")}
@@ -549,7 +582,7 @@ const renderHealthCheck = () => {
           <p>A high score does not mean the scene is visually finished. It means the technical surface is less likely to break under real page conditions. Use the result as a publishing gate before you add more polish.</p>
           <p>Scores below 55 usually mean the scene still has structural risk. Scores between 55 and 79 are workable but need mobile and loading checks. Scores at 80 or above are ready for design review, copy review, and real-device testing.</p>
           <div class="guide-grid">
-            ${["three-js-mobile-performance-checklist", "three-js-scene-debugging-checklist", "three-js-performance-budget"]
+            ${["three-js-responsive-canvas", "three-js-scene-debugging-checklist", "three-js-performance-budget"]
               .map((slug) => guideCard(getGuide(slug)))
               .join("\n")}
           </div>
@@ -755,43 +788,14 @@ const renderGuideNextStep = (guide) => {
     </section>`;
 };
 
-const faqsForGuide = (guide) => [
-  {
-    q: `When should I use ${guide.title}?`,
-    a: `Use it when your Three.js scene has a focused ${guide.tags[0] || "WebGL"} problem and you need a practical checklist before adding more visual polish.`
-  },
-  {
-    q: "Is the code snippet production-ready?",
-    a: "Treat the snippet as a clear starting point. Test it in your scene, adapt naming and paths, and verify behavior on mobile hardware before publishing."
-  },
-  {
-    q: "What should I check after applying this guide?",
-    a: "Run the scene through mobile sizing, console errors, loading states, source links, and related guide paths so the page remains useful even when assets or WebGL fail."
-  }
-];
-
-const faqJsonLd = (faqs) => ({
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqs.map((faq) => ({
-    "@type": "Question",
-    name: faq.q,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: faq.a
-    }
-  }))
-});
-
 const renderToc = (guide) => {
   const items = [
     ...guide.sections.map((section) => section.heading),
-    "When this guide is the right tool",
-    "Common mistake to avoid",
-    "Publishing check",
+    ...guide.blocks.map((block) => block.heading),
     guide.code.label,
-    "FAQ",
-    "Sources and further reading"
+    ...(guide.faqs?.length ? ["FAQ"] : []),
+    "Sources and further reading",
+    "Update record"
   ];
 
   return `<nav class="article-toc" aria-label="Article sections">
@@ -800,35 +804,61 @@ const renderToc = (guide) => {
   </nav>`;
 };
 
-const renderGuideFieldNotes = (guide) => {
-  const primaryTag = guide.tags[0] || "Three.js";
-  const mainTakeaway = guide.takeaways[0] || guide.summary;
-  const secondTakeaway = guide.takeaways[1] || guide.summary;
-  const thirdTakeaway = guide.takeaways[2] || guide.summary;
-
-  return `
-    <section class="article-section field-notes" id="when-this-guide-is-the-right-tool">
-      <h2>When this guide is the right tool</h2>
-      <p>Use this guide when the problem is specific enough that a broad Three.js tutorial would waste time. The focus here is ${html(primaryTag)} in a real browser page: what to check first, what to measure, and what to avoid before the scene becomes harder to reason about.</p>
-      <p>The practical rule is simple: ${html(mainTakeaway)} If that sentence describes the scene in front of you, treat the article as a checklist. Read the explanation, copy the smallest useful code pattern, then test the result in a narrow mobile viewport and a wide desktop viewport before adding more polish.</p>
-    </section>
-    <section class="article-section field-notes" id="common-mistake-to-avoid">
-      <h2>Common mistake to avoid</h2>
-      <p>The common mistake is treating ${html(guide.title)} as a visual tweak instead of a scene-system decision. Three.js problems often look like one broken line of code, but the actual issue is usually a chain: asset assumptions, renderer settings, camera math, material setup, interaction state, and page layout all meet inside the canvas.</p>
-      <p>That is why the safest fix is incremental. Start from a known-good scene, change one variable, and keep a visible diagnostic while testing. ${html(secondTakeaway)} When the scene works, remove temporary helpers and leave behind only the checks that make sense for users.</p>
-    </section>
-    <section class="article-section field-notes" id="publishing-check">
-      <h2>Publishing check</h2>
-      <p>Before publishing, run the scene through three questions. Does the page remain useful if WebGL fails or the asset loads slowly? Does the same scene still read clearly on a phone? Can another developer understand the important settings without reverse-engineering the whole file?</p>
-      <p>The last pass should be boring on purpose: verify canvas size, console errors, mobile performance, source links, internal links, and the related guide path. ${html(thirdTakeaway)} If any answer is fuzzy, fix that before introducing a new effect or a larger asset.</p>
+const renderGuideBlock = (block) => {
+  const heading = `<h2>${html(block.heading)}</h2>`;
+  const intro = block.intro ? `<p>${html(block.intro)}</p>` : "";
+  if (block.type === "demo") {
+    return `<section class="article-section evidence-block evidence-demo" id="${slugText(block.heading)}">
+      ${heading}${intro}
+      <ul>${block.checks.map((item) => `<li>${html(item)}</li>`).join("\n")}</ul>
+      <a class="button primary" href="${routeUrl(block.href)}">${html(block.label)}</a>
     </section>`;
+  }
+  if (block.type === "code-comparison") {
+    return `<section class="article-section evidence-block" id="${slugText(block.heading)}">
+      ${heading}${intro}
+      <div class="code-comparison">
+        <div><strong>Fragile pattern</strong><pre class="article-code"><code>${html(block.before)}</code></pre></div>
+        <div><strong>Testable pattern</strong><pre class="article-code"><code>${html(block.after)}</code></pre></div>
+      </div>
+    </section>`;
+  }
+  if (block.type === "metric-table") {
+    return `<section class="article-section evidence-block" id="${slugText(block.heading)}">
+      ${heading}${intro}
+      <div class="table-scroll"><table class="evidence-table">
+        <thead><tr>${block.columns.map((column) => `<th>${html(column)}</th>`).join("")}</tr></thead>
+        <tbody>${block.rows
+          .map((row) => `<tr>${row.map((cell) => `<td>${html(cell)}</td>`).join("")}</tr>`)
+          .join("\n")}</tbody>
+      </table></div>
+    </section>`;
+  }
+  if (block.type === "steps") {
+    return `<section class="article-section evidence-block" id="${slugText(block.heading)}">
+      ${heading}${intro}
+      <ol class="evidence-steps">${block.items.map((item) => `<li>${html(item)}</li>`).join("\n")}</ol>
+    </section>`;
+  }
+  if (block.type === "figure") {
+    return `<figure class="article-section evidence-block" id="${slugText(block.heading)}">
+      ${heading}<img src="${routeUrl(block.src)}" alt="${html(block.alt)}">
+      <figcaption>${html(block.caption)}</figcaption>
+    </figure>`;
+  }
+  if (block.type === "prose") {
+    return `<section class="article-section evidence-block" id="${slugText(block.heading)}">
+      ${heading}${block.paragraphs.map((paragraph) => `<p>${html(paragraph)}</p>`).join("\n")}
+    </section>`;
+  }
+  throw new Error(`Unsupported guide block type: ${block.type}`);
 };
 
 const renderGuide = (guide) => {
   const route = `/guides/${guide.slug}/`;
   const related = relatedGuides(guide);
   const adjacent = adjacentGuides(guide);
-  const faqs = faqsForGuide(guide);
+  const faqs = guide.faqs || [];
   const body = `
     <article class="guide-page">
       <div class="article-shell">
@@ -837,8 +867,11 @@ const renderGuide = (guide) => {
           <p class="eyebrow">${html(guide.tags.join(" / "))}</p>
           <h1>${html(guide.title)}</h1>
           <p class="article-summary">${html(guide.summary)}</p>
+          <p class="article-byline">By <a rel="author" href="${routeUrl("/authors/jzy/")}">JZY</a>, independent developer and maintainer of Three.js Lab.</p>
           <div class="guide-meta">
+            <span>Published ${html(guide.published)}</span>
             <span>Updated ${html(guide.updated)}</span>
+            <span>Last tested ${html(guide.lastTested)}</span>
             <span>${html(guide.minutes)} min read</span>
           </div>
         </header>
@@ -847,6 +880,16 @@ const renderGuide = (guide) => {
           <ul>
             ${guide.takeaways.map((item) => `<li>${html(item)}</li>`).join("\n")}
           </ul>
+          <div class="test-record">
+            <strong>Test record</strong>
+            <dl>
+              <div><dt>Three.js</dt><dd>${html(guide.testedWith.three)}</dd></div>
+              <div><dt>Browsers</dt><dd>${html(guide.testedWith.browsers.join("; "))}</dd></div>
+              <div><dt>Viewports</dt><dd>${html(guide.testedWith.viewports.join("; "))}</dd></div>
+              <div><dt>Safari</dt><dd>${html(guide.testedWith.safari)}</dd></div>
+              <div><dt>iOS</dt><dd>${html(guide.testedWith.ios)}</dd></div>
+            </dl>
+          </div>
           ${renderToc(guide)}
         </aside>
         <div class="article-body">
@@ -859,12 +902,14 @@ const renderGuide = (guide) => {
               </section>`
             )
             .join("\n")}
-          ${renderGuideFieldNotes(guide)}
+          ${guide.blocks.map(renderGuideBlock).join("\n")}
           <section class="article-section" id="${slugText(guide.code.label)}">
             <h2>${html(guide.code.label)}</h2>
             <pre class="article-code"><code>${html(guide.code.value)}</code></pre>
           </section>
-          <section class="article-section" id="faq">
+          ${
+            faqs.length
+              ? `<section class="article-section" id="faq">
             <h2>FAQ</h2>
             <div class="faq-list">
               ${faqs
@@ -874,7 +919,9 @@ const renderGuide = (guide) => {
                 </details>`)
                 .join("\n")}
             </div>
-          </section>
+          </section>`
+              : ""
+          }
           <section class="article-section" id="sources-and-further-reading">
             <h2>Sources and further reading</h2>
             <ul class="source-list">
@@ -882,6 +929,12 @@ const renderGuide = (guide) => {
                 .map((source) => `<li><a href="${html(source.url)}">${html(source.label)}</a></li>`)
                 .join("\n")}
             </ul>
+          </section>
+          <section class="article-section article-changelog" id="update-record">
+            <h2>Update record</h2>
+            <ul>${guide.changelog
+              .map((entry) => `<li><time datetime="${html(entry.date)}">${html(entry.date)}</time>: ${html(entry.note)}</li>`)
+              .join("\n")}</ul>
           </section>
           <nav class="article-neighbors" aria-label="Adjacent guides">
             <a href="${routeUrl(`/guides/${adjacent.previous.slug}/`)}"><span>Previous</span><strong>${html(adjacent.previous.title)}</strong></a>
@@ -913,19 +966,90 @@ const renderGuide = (guide) => {
         "@type": "Article",
         headline: guide.title,
         description: guide.description,
-        datePublished: guide.updated,
+        datePublished: guide.published,
         dateModified: guide.updated,
+        image: [socialImage],
         author: {
-          "@type": "Organization",
-          name: site.author
+          "@type": "Person",
+          "@id": `${pathFor("/authors/jzy/")}#person`,
+          name: "JZY",
+          url: pathFor("/authors/jzy/"),
+          sameAs: ["https://github.com/jzy0546"]
         },
         publisher: {
           "@type": "Organization",
-          name: site.author
+          name: "Vavist",
+          url: pathFor("/")
         },
         mainEntityOfPage: pathFor(route)
-      },
-      faqJsonLd(faqs)
+      }
+    ],
+    socialType: "article",
+    adsEligible: true
+  });
+};
+
+const renderRetiredGuide = (guide) => {
+  const route = `/guides/${guide.slug}/`;
+  const target = guide.targetSlug ? `/guides/${guide.targetSlug}/` : null;
+  const canonical = target ? pathFor(target) : pathFor(route);
+  const body = `
+    <article class="content-page retired-guide">
+      <div class="content-inner">
+        <p class="eyebrow">Guide consolidated</p>
+        <h1>${html(guide.title)}</h1>
+        <p>${html(guide.reason)}</p>
+        ${
+          target
+            ? `<p>The maintained version includes a current test record, code comparison, and reproducible steps.</p>
+              <a class="button primary" href="${routeUrl(target)}">Read the maintained guide</a>`
+            : `<p>This page remains available as a retirement notice. Vavist excludes it from navigation and the sitemap, and JZY will publish a replacement only after rebuilding and testing its examples.</p>
+              <a class="button secondary" href="${routeUrl("/guides/")}">Browse tested guides</a>`
+        }
+      </div>
+    </article>`;
+  return layout({
+    route,
+    title: `${guide.title} - Consolidated`,
+    description: guide.reason,
+    body,
+    robots: "noindex,follow",
+    canonical,
+    adsEligible: false
+  });
+};
+
+const renderAuthor = () => {
+  const route = "/authors/jzy/";
+  const body = `
+    <article class="content-page author-page">
+      <div class="content-inner">
+        <p class="eyebrow">Author and maintainer</p>
+        <h1>JZY</h1>
+        <p>JZY is the independent developer and maintainer of Vavist and Three.js Lab. The work focuses on small browser-based utilities for inspecting 3D assets, camera framing, shader setup, lighting, and WebGL debugging. Guides document the tested Three.js version, browser environment, sample input, and known limits.</p>
+        <p>This profile lists no commercial experience, client work, or support for untested platforms. JZY publishes source code, reproducible demos, test records, update history, and corrections so readers can check each claim.</p>
+        <ul class="source-list">
+          <li><a href="https://github.com/jzy0546">GitHub profile</a></li>
+          <li><a href="https://github.com/jzy0546/vavist">Vavist source repository</a></li>
+          <li><a href="https://github.com/jzy0546/threejs-lab">Three.js Lab source repository</a></li>
+        </ul>
+      </div>
+    </article>`;
+  return layout({
+    route,
+    title: "JZY: Author and Maintainer of Three.js Lab",
+    description:
+      "Meet JZY, the independent developer maintaining Vavist Three.js tools, tested WebGL guides, source examples, and correction records.",
+    body,
+    structuredData: [
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "@id": `${pathFor(route)}#person`,
+        name: "JZY",
+        url: pathFor(route),
+        sameAs: ["https://github.com/jzy0546"]
+      }
     ]
   });
 };
@@ -997,11 +1121,42 @@ const allRoutes = () => [
   "/resources/",
   "/guides/",
   ...guides.map((guide) => `/guides/${guide.slug}/`),
+  ...retiredGuides.map((guide) => `/guides/${guide.slug}/`),
   ...pages.map((page) => `/${page.slug}/`),
+  "/authors/jzy/",
   "/404/"
 ];
 
-const sitemapRoutes = () => allRoutes().filter((route) => route !== "/404/");
+const toolRoutes = [
+  "/tools/gltf-viewer/",
+  "/tools/camera-fov/",
+  "/tools/shader-starter/",
+  "/tools/lighting-presets/",
+  "/tools/examples/"
+];
+
+const latestGuideUpdate = guides.reduce(
+  (latest, guide) => (guide.updated > latest ? guide.updated : latest),
+  ""
+);
+
+const sitemapRoutes = () =>
+  [
+    "/",
+    "/tools/",
+    ...toolRoutes,
+    "/webgl-scene-health-check/",
+    "/resources/",
+    "/guides/",
+    ...guides.map((guide) => `/guides/${guide.slug}/`),
+    ...pages.map((page) => `/${page.slug}/`),
+    "/authors/jzy/"
+  ]
+    .map((route) => {
+      const guide = guides.find((item) => route === `/guides/${item.slug}/`);
+      const lastmod = guide?.updated || (["/", "/guides/"].includes(route) ? latestGuideUpdate : "");
+      return { route, lastmod };
+    });
 
 const robots = () => `User-agent: *
 Allow: /
@@ -1013,9 +1168,9 @@ const sitemap = () => `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemapRoutes()
   .map(
-    (route) => `  <url>
-    <loc>${html(pathFor(route))}</loc>
-    <lastmod>${buildDate}</lastmod>
+    ({ route, lastmod }) => `  <url>
+    <loc>${html(pathFor(route))}</loc>${lastmod ? `
+    <lastmod>${lastmod}</lastmod>` : ""}
   </url>`
   )
   .join("\n")}
@@ -1035,6 +1190,7 @@ const copyAssets = async () => {
   await copyFile(path.join(srcDir, "assets", "app.js"), path.join(outputAssets, "app.js"));
   await copyFile(path.join(srcDir, "assets", "analytics.js"), path.join(outputAssets, "analytics.js"));
   await copyFile(path.join(srcDir, "assets", "site-icon.svg"), path.join(outputAssets, "site-icon.svg"));
+  await copyFile(path.join(srcDir, "assets", "social-card.png"), path.join(outputAssets, "social-card.png"));
 };
 
 const build = async () => {
@@ -1052,9 +1208,15 @@ const build = async () => {
     await writeRoute(`/guides/${guide.slug}/`, renderGuide(guide));
   }
 
+  for (const guide of retiredGuides) {
+    await writeRoute(`/guides/${guide.slug}/`, renderRetiredGuide(guide));
+  }
+
   for (const page of pages) {
     await writeRoute(`/${page.slug}/`, renderStaticPage(page));
   }
+
+  await writeRoute("/authors/jzy/", renderAuthor());
 
   const notFound = renderNotFound();
   await writeRoute("/404/", notFound);

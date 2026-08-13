@@ -25,18 +25,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
+          cache: npm
 
       - name: Configure Pages
         uses: actions/configure-pages@v6
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm --prefix tools-app ci
 
       - name: Build
         run: npm run build
         env:
           SITE_URL: ${{ vars.SITE_URL }}
-          LAB_URL: ${{ vars.LAB_URL }}
           CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
           GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
           ADSENSE_CLIENT: ${{ vars.ADSENSE_CLIENT }}
+          ADSENSE_MODE: ${{ vars.ADSENSE_MODE || 'off' }}
           ADS_TXT_ACCOUNT: ${{ vars.ADS_TXT_ACCOUNT }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
 

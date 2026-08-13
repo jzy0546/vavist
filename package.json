@@ -4,8 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.js",
-    "check": "node scripts/check.js",
+    "build": "npm run build:site && npm run build:tools",
+    "build:site": "node scripts/build.js",
+    "build:tools": "npm --prefix tools-app run build",
+    "check": "npm run check:content && npm run check:site",
+    "check:content": "node scripts/check-content.js",
+    "check:site": "node scripts/check.js",
+    "qa": "node scripts/qa.js",
+    "qa:visual:mobile": "node scripts/qa.js --visual-only --viewports=mobile",
+    "qa:visual:tablet": "node scripts/qa.js --visual-only --viewports=tablet",
+    "qa:visual:desktop": "node scripts/qa.js --visual-only --viewports=desktop",
+    "qa:lighthouse:home": "node scripts/qa.js --routes=/ --lighthouse-routes=/ --runs=3",
+    "qa:lighthouse:guide": "node scripts/qa.js --routes=/guides/three-js-gltf-loader-checklist/ --lighthouse-routes=/guides/three-js-gltf-loader-checklist/ --runs=3",
+    "smoke:tools": "npm --prefix tools-app run smoke",
     "serve": "node scripts/serve.js"
+  },
+  "devDependencies": {
+    "lighthouse": "^13.4.0",
+    "playwright-core": "^1.61.1"
   }
 }

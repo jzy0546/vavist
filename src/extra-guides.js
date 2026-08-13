@@ -6,6 +6,7 @@ export const extraGuides = [
       "Set up a transparent Three.js canvas, keep page compositing predictable, and export clean screenshots without unexpected black backgrounds.",
     summary:
       "Transparent canvas output is simple when alpha, clear color, CSS background, and screenshot timing all agree.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["screenshots", "transparent canvas", "export"],
@@ -63,6 +64,7 @@ export const extraGuides = [
       "Use OrbitControls damping, target, zoom limits, and update loops without making camera movement feel sticky or broken.",
     summary:
       "Damping gives OrbitControls weight, but it only works when the render loop and target are set up correctly.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 7,
     tags: ["OrbitControls", "camera", "interaction"],
@@ -120,6 +122,7 @@ export const extraGuides = [
       "Debug click and hover picking in Three.js with normalized pointer coordinates, camera setup, object layers, and intersection order.",
     summary:
       "Raycasting works best when pointer coordinates, camera projection, and pickable objects are treated as one pipeline.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["Raycaster", "picking", "interaction"],
@@ -177,6 +180,7 @@ export const extraGuides = [
       "Set up shadows in Three.js while avoiding black materials, missing shadow maps, clipped lights, and over-dark product previews.",
     summary:
       "Good shadows need renderer support, casting objects, receiving surfaces, enough light, and a camera range that fits the scene.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["shadows", "lighting", "materials"],
@@ -234,6 +238,7 @@ export const extraGuides = [
       "Load color, normal, roughness, metalness, and ambient-occlusion textures with the right color-space assumptions.",
     summary:
       "Texture bugs become easier when color maps and data maps are handled differently from the start.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["textures", "color space", "materials"],
@@ -291,6 +296,7 @@ export const extraGuides = [
       "Understand when to use DRACO geometry compression and KTX2 texture compression for faster Three.js asset delivery.",
     summary:
       "Geometry compression and texture compression solve different load problems, so choose them by bottleneck.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["DRACO", "KTX2", "assets"],
@@ -348,6 +354,7 @@ export const extraGuides = [
       "Choose between CSS2DRenderer, projected DOM labels, and canvas text when adding readable labels to Three.js scenes.",
     summary:
       "HTML labels are a UI layer problem as much as a 3D problem: position, depth, occlusion, and readability all matter.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["labels", "CSS2DRenderer", "UI"],
@@ -405,6 +412,7 @@ export const extraGuides = [
       "Use LoadingManager to coordinate model, texture, and file loading states without freezing the page behind a spinner.",
     summary:
       "Loading UI should explain what the scene is waiting for and keep the rest of the page usable.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 7,
     tags: ["LoadingManager", "loading", "UX"],
@@ -462,6 +470,7 @@ export const extraGuides = [
       "Use InstancedMesh when repeated geometry turns into too many draw calls for a browser-friendly Three.js scene.",
     summary:
       "Instancing keeps repeated objects cheap by drawing many transforms of the same geometry and material together.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["InstancedMesh", "performance", "draw calls"],
@@ -519,6 +528,7 @@ export const extraGuides = [
       "Use environment maps to make metallic and glossy GLB materials look intentional in browser-based Three.js viewers.",
     summary:
       "Environment lighting often does more for PBR materials than another direct light.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["environment map", "PBR", "GLB viewer"],
@@ -576,6 +586,7 @@ export const extraGuides = [
       "Make Three.js scenes survive mobile GPUs with pixel-ratio limits, simpler materials, asset budgets, and reduced-motion fallbacks.",
     summary:
       "Mobile WebGL quality comes from budgets: fewer pixels, fewer surprises, and graceful fallbacks.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["mobile", "performance", "checklist"],
@@ -633,6 +644,7 @@ export const extraGuides = [
       "Design a reliable screenshot export button for Three.js tools with explicit render timing, filename handling, and transparent-background choices.",
     summary:
       "A screenshot feature should export the scene the user sees, not an old frame, empty buffer, or accidental UI state.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 7,
     tags: ["screenshot", "tools", "canvas"],
@@ -690,6 +702,7 @@ export const extraGuides = [
       "A practical mistake list for blank canvases, broken imports, blurry renders, heavy assets, wrong pivots, missing lights, and mobile failures.",
     summary:
       "Most broken Three.js pages fail in repeatable ways. This checklist turns those failures into a faster review path.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 10,
     tags: ["gotchas", "debugging", "publishing"],

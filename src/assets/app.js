@@ -181,10 +181,41 @@ const initHeroScene = async () => {
       camera.lookAt(0.65, 0.28, 0);
       renderer.render(scene, camera);
     }
-    window.requestAnimationFrame(render);
+    if (!reduced) window.requestAnimationFrame(render);
   };
 
   render();
+};
+
+const loadExternalScript = (src, attributes = {}) => {
+  if (document.querySelector(`script[src="${src}"]`)) return;
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = src;
+  Object.entries(attributes).forEach(([name, value]) => script.setAttribute(name, value));
+  document.head.append(script);
+};
+
+const initDeferredEnhancements = () => {
+  const events = ["pointerdown", "pointermove", "keydown", "scroll", "touchstart"];
+  const start = () => {
+    events.forEach((event) => window.removeEventListener(event, start));
+    const analyticsId = window.__vavistAnalyticsId;
+    const adsenseClient = window.__vavistAdsenseClient;
+    if (analyticsId) {
+      loadExternalScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(analyticsId)}`);
+    }
+    if (adsenseClient) {
+      loadExternalScript(
+        `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(adsenseClient)}`,
+        { crossorigin: "anonymous" }
+      );
+    }
+    initHeroScene().catch(() => {
+      document.querySelector("[data-scene]")?.setAttribute("data-scene-ready", "false");
+    });
+  };
+  events.forEach((event) => window.addEventListener(event, start, { once: true, passive: true }));
 };
 
 const initHealthCheck = () => {
@@ -270,6 +301,4 @@ initReveal();
 initAnalytics();
 initScrollDepth();
 initHealthCheck();
-initHeroScene().catch(() => {
-  document.querySelector("[data-scene]")?.setAttribute("data-scene-ready", "false");
-});
+initDeferredEnhancements();
