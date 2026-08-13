@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Vavist Three.js Lab</title>
+  <desc id="desc">A dark technical social preview for practical browser-native Three.js tools and guides.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10100e"/>
+      <stop offset="1" stop-color="#171612"/>
+    </linearGradient>
+    <radialGradient id="tealGlow" cx="0.78" cy="0.42" r="0.45">
+      <stop offset="0" stop-color="#65d8c2" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#65d8c2" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#f4efe4" stroke-opacity="0.07" stroke-width="1"/>
+    </pattern>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="28" stdDeviation="35" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#tealGlow)"/>
+  <path d="M0 524 H1200" stroke="#403a30"/>
+  <path d="M760 90 L1110 90 L1110 440 L760 440 Z" fill="#1e1c17" stroke="#f4efe4" stroke-opacity="0.14" filter="url(#shadow)"/>
+  <g transform="translate(935 264)" fill="none">
+    <ellipse rx="148" ry="54" stroke="#f1ae63" stroke-opacity="0.55" stroke-width="2" transform="rotate(16)"/>
+    <ellipse rx="142" ry="52" stroke="#65d8c2" stroke-opacity="0.45" stroke-width="2" transform="rotate(-34)"/>
+    <circle r="98" stroke="#f4efe4" stroke-opacity="0.18" stroke-width="2"/>
+    <path d="M-72 -22 C-22 -105, 80 -75, 72 18 C65 100, -45 106, -82 36 C-100 1, -92 -2, -72 -22 Z" fill="#65d8c2" fill-opacity="0.12" stroke="#9df3df" stroke-width="4"/>
+    <circle cx="-72" cy="-22" r="7" fill="#f1ae63" stroke="none"/>
+    <circle cx="72" cy="18" r="7" fill="#65d8c2" stroke="none"/>
+  </g>
+  <g font-family="Geist, Aptos, Segoe UI Variable, Segoe UI, sans-serif">
+    <text x="80" y="102" fill="#65d8c2" font-size="25" font-weight="700">VAVIST / WEBGL WORKBENCH</text>
+    <text x="80" y="250" fill="#f7f0e5" font-size="92" font-weight="800">Three.js Lab</text>
+    <text x="84" y="322" fill="#cfc5b4" font-size="34">Practical browser-native tools and guides.</text>
+    <text x="84" y="397" fill="#f1ae63" font-size="24" font-weight="700">INSPECT · FRAME · DEBUG · SHIP</text>
+    <text x="80" y="575" fill="#b9ad9b" font-size="24">vavist.com</text>
+  </g>
+  <rect x="80" y="455" width="590" height="2" fill="#65d8c2" opacity="0.7"/>
+  <circle cx="80" cy="455" r="6" fill="#65d8c2"/>
+</svg>

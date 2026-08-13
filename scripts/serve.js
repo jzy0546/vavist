@@ -1,17 +1,21 @@
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { brotliCompress as brotliCompressCallback } from "node:zlib";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const distDir = path.join(rootDir, "dist");
 const port = Number(process.env.PORT || 4173);
+const brotliCompress = promisify(brotliCompressCallback);
 
 const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  ".png": "image/png",
   ".svg": "image/svg+xml",
   ".xml": "application/xml; charset=utf-8",
   ".txt": "text/plain; charset=utf-8"
@@ -58,7 +62,20 @@ const server = createServer(async (request, response) => {
 
   const ext = path.extname(filePath);
   const body = await readFile(filePath);
-  response.writeHead(200, { "content-type": types[ext] || "application/octet-stream" });
+  const headers = {
+    "content-type": types[ext] || "application/octet-stream",
+    "cache-control": (request.url || "").startsWith("/assets/")
+      ? "public, max-age=31536000, immutable"
+      : "public, max-age=0, must-revalidate"
+  };
+  if (/\.(?:html|css|js|svg|xml|txt)$/.test(ext) && request.headers["accept-encoding"]?.includes("br")) {
+    headers["content-encoding"] = "br";
+    headers.vary = "Accept-Encoding";
+    response.writeHead(200, headers);
+    response.end(await brotliCompress(body));
+    return;
+  }
+  response.writeHead(200, headers);
   response.end(body);
 });
 

@@ -8,6 +8,7 @@ const baseGuides = [
       "A practical checklist for loading GLB and GLTF files in Three.js without scale surprises, black materials, missing textures, or broken animation clips.",
     summary:
       "Load models as assets you can inspect, measure, and normalize before they become part of a production scene.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 7,
     tags: ["GLTFLoader", "assets", "workflow"],
@@ -65,6 +66,7 @@ const baseGuides = [
       "Use bounding boxes, object centers, aspect ratio, and PerspectiveCamera field-of-view math to frame imported models reliably.",
     summary:
       "A camera-fit routine is the difference between a reusable viewer and a scene that only works for one model.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["camera", "PerspectiveCamera", "Box3"],
@@ -122,6 +124,7 @@ const baseGuides = [
       "Build a small, readable ShaderMaterial setup with uniforms, time animation, UV coordinates, and safe debugging habits.",
     summary:
       "Start shaders from a predictable scaffold so the first visible result is easy to inspect and easy to change.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["ShaderMaterial", "GLSL", "materials"],
@@ -179,6 +182,7 @@ const baseGuides = [
       "Use hemisphere, key, fill, rim, and environment lighting to make GLB product previews legible across devices.",
     summary:
       "A product viewer needs lights that explain the shape, not lights that show off the renderer.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 7,
     tags: ["lighting", "PBR", "viewer"],
@@ -236,6 +240,7 @@ const baseGuides = [
       "Create a point cloud that is light enough for hero scenes, data backgrounds, and interactive WebGL experiments.",
     summary:
       "Particles are most useful when the geometry is simple, the count is intentional, and the animation avoids layout work.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 7,
     tags: ["particles", "BufferGeometry", "Points"],
@@ -293,6 +298,7 @@ const baseGuides = [
       "Resize the renderer, camera aspect, and drawing buffer correctly so a Three.js scene stays sharp on desktop and mobile.",
     summary:
       "Responsive WebGL is mostly about matching CSS size, drawing-buffer size, pixel ratio, and camera projection.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["responsive", "renderer", "mobile"],
@@ -350,6 +356,7 @@ const baseGuides = [
       "Understand object origins, parent groups, geometry centering, and pivot rigs when a mesh rotates around the wrong point.",
     summary:
       "Most rotation bugs are not animation bugs. They are origin, geometry, or parent-space problems.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 7,
     tags: ["rotation", "pivot", "transforms"],
@@ -407,6 +414,7 @@ const baseGuides = [
       "Set clear limits for draw calls, texture size, pixel ratio, animation loops, and postprocessing before a WebGL page becomes slow.",
     summary:
       "Performance gets easier when each scene has a budget before it has polish.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["performance", "mobile", "budget"],
@@ -464,6 +472,7 @@ const baseGuides = [
       "Understand output color space, texture color space, tone mapping, and why imported GLB materials can look different from authoring tools.",
     summary:
       "Color problems often come from mismatched assumptions between textures, renderer output, lighting, and tone mapping.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["color", "PBR", "materials"],
@@ -521,6 +530,7 @@ const baseGuides = [
       "A systematic checklist for blank canvases, invisible meshes, clipped cameras, missing lights, and silent WebGL mistakes.",
     summary:
       "A blank canvas is easier to fix when you test renderer, camera, geometry, material, lights, and animation in order.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 7,
     tags: ["debugging", "blank canvas", "workflow"],
@@ -578,6 +588,7 @@ const baseGuides = [
       "Plan static pages, demos, internal links, and explainers so a Three.js tool site is useful to readers and easier for search engines to understand.",
     summary:
       "A WebGL site should not rely on canvas alone. Each page needs readable text that explains the problem the demo solves.",
+    published: "2026-07-06",
     updated: "2026-07-06",
     minutes: 8,
     tags: ["static site", "SEO", "content"],
@@ -630,6 +641,582 @@ const baseGuides = [
   }
 ];
 
-export const guides = [...baseGuides, ...extraGuides];
+const allGuideDrafts = [...baseGuides, ...extraGuides];
+
+const testedWith = {
+  three: "0.185.0",
+  browsers: ["Chrome 151.0.7922.109", "Edge 151.0.4129.78"],
+  viewports: ["390 x 844 emulation", "1366 x 900 desktop"],
+  safari: "Not tested",
+  ios: "Not tested"
+};
+
+const coreGuideDetails = {
+  "three-js-gltf-loader-checklist": {
+    cluster: "GLB import",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Inspect the same asset before integration",
+        intro:
+          "The lab sample is a deliberately small control asset. Its fixed metrics make loader, camera, and material regressions easier to separate from asset complexity.",
+        href: "/tools/gltf-viewer/",
+        label: "Open the GLB Viewer sample",
+        checks: ["1 mesh and 12 triangles", "2.00 x 2.00 x 2.00 bounds", "Local file loading stays on-device"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Keep loader configuration beside the loader",
+        intro:
+          "A loader with implicit decoder paths is difficult to move between local, staging, and production builds.",
+        before:
+          "const loader = new GLTFLoader();\nloader.load('/model.glb', ({ scene }) => root.add(scene));",
+        after:
+          "const loader = new GLTFLoader(manager);\nloader.setDRACOLoader(dracoLoader);\nloader.setKTX2Loader(ktx2Loader.detectSupport(renderer));\nloader.load(url, onLoad, onProgress, onError);"
+      },
+      {
+        type: "metric-table",
+        heading: "Control asset record",
+        intro: "These values come from the sample GLB generated during the site build.",
+        columns: ["Measurement", "Recorded value"],
+        rows: [
+          ["Meshes", "1"],
+          ["Vertices", "24"],
+          ["Triangles", "12"],
+          ["Bounds", "2.00 x 2.00 x 2.00"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Reproduce an import failure without guessing",
+        intro: "Keep the file, loader configuration, and console output together for one narrow test.",
+        items: [
+          "Load the built-in sample and record its metrics.",
+          "Load the project asset with the same renderer and camera.",
+          "Compare network errors, decoder paths, bounds, material count, and animation clips.",
+          "Change one loader or asset assumption, then repeat the comparison."
+        ]
+      }
+    ]
+  },
+  "three-js-loading-progress-loadingmanager": {
+    cluster: "GLB import",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Observe a real loader state transition",
+        intro:
+          "The GLB Viewer exposes a readable status before a file is selected, while it loads, after success, and after failure.",
+        href: "/tools/gltf-viewer/",
+        label: "Test the viewer states",
+        checks: ["Built-in sample ready", "Loading filename", "Loaded locally", "Clear invalid-file or load-failure message"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Do not equate item count with downloaded bytes",
+        intro:
+          "LoadingManager reports completed resources. It does not guarantee byte-accurate transfer progress for every server.",
+        before:
+          "manager.onProgress = (_, loaded, total) => {\n  bar.value = loaded / total;\n  label.textContent = `${Math.round(bar.value * 100)}%`;\n};",
+        after:
+          "manager.onProgress = (_, loaded, total) => {\n  const known = total > 0;\n  bar.removeAttribute('value');\n  label.textContent = known\n    ? `${loaded} of ${total} resources ready`\n    : 'Loading scene resources';\n};"
+      },
+      {
+        type: "metric-table",
+        heading: "Required loading UI states",
+        intro: "The tested interface keeps four states visible without blocking the surrounding article.",
+        columns: ["State", "User-facing evidence"],
+        rows: [
+          ["Idle", "No local file selected"],
+          ["Loading", "Filename is shown"],
+          ["Success", "Metrics and local-load confirmation"],
+          ["Failure", "Supported extension or parser error"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Test the failure path deliberately",
+        intro: "A loading UI is not verified until an error can be understood and retried.",
+        items: [
+          "Load the known sample and confirm the success state.",
+          "Choose an unsupported extension and confirm the inline validation message.",
+          "Try a malformed GLB and confirm the parser error does not remove the previous useful page content.",
+          "Load the sample again to verify that retry remains possible."
+        ]
+      }
+    ]
+  },
+  "fit-camera-to-object-three-js": {
+    cluster: "Camera control",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Check the framing math with known dimensions",
+        intro:
+          "The calculator starts with a 2-unit object, a 5-unit distance, 1.777 aspect ratio, and 10 percent margin.",
+        href: "/tools/camera-fov/",
+        label: "Open the Camera FOV calculator",
+        checks: ["24.81 degree vertical FOV", "42.71 degree horizontal FOV", "3.91 units visible width"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Aim at the measured center",
+        intro: "Moving only the camera leaves controls orbiting around the previous target.",
+        before:
+          "camera.position.z = 5;\ncamera.lookAt(0, 0, 0);",
+        after:
+          "const box = new THREE.Box3().setFromObject(object);\nconst center = box.getCenter(new THREE.Vector3());\nconst size = box.getSize(new THREE.Vector3());\nfitCameraToBounds(camera, controls, center, size);"
+      },
+      {
+        type: "metric-table",
+        heading: "Calculator verification record",
+        intro: "The values are deterministic outputs from the formula shown in the tool.",
+        columns: ["Input or output", "Value"],
+        rows: [
+          ["Object height", "2"],
+          ["Camera distance", "5"],
+          ["Framing margin", "10%"],
+          ["Vertical FOV", "24.81 degrees"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Verify wide and tall assets separately",
+        intro: "A vertical fit alone can crop a wide object on a narrow viewport.",
+        items: [
+          "Measure a Box3 after world matrices are current.",
+          "Calculate both vertical and horizontal fit distances.",
+          "Choose the larger distance and update camera near and far planes.",
+          "Move OrbitControls target to the same center, then test the mobile viewport."
+        ]
+      }
+    ]
+  },
+  "three-js-responsive-canvas": {
+    cluster: "Performance",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Resize a live canvas and inspect the result",
+        intro:
+          "The examples gallery uses container dimensions for its canvases and keeps the surrounding page readable at desktop and mobile widths.",
+        href: "/tools/examples/",
+        label: "Open the responsive examples",
+        checks: ["Canvas follows its container", "Camera aspect updates", "Page remains usable without the preview"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Compare CSS pixels before resizing the buffer",
+        intro: "Assigning the window size on every frame wastes work and ignores embedded containers.",
+        before:
+          "renderer.setSize(window.innerWidth, window.innerHeight);\ncamera.aspect = window.innerWidth / window.innerHeight;",
+        after:
+          "const width = container.clientWidth;\nconst height = container.clientHeight;\nif (canvas.width !== width * pixelRatio || canvas.height !== height * pixelRatio) {\n  renderer.setSize(width, height, false);\n  camera.aspect = width / height;\n  camera.updateProjectionMatrix();\n}"
+      },
+      {
+        type: "metric-table",
+        heading: "Viewport check matrix",
+        intro: "These are the two automated viewport sizes used by the local smoke checks.",
+        columns: ["Viewport", "Expected condition"],
+        rows: [
+          ["390 x 844", "No horizontal document overflow"],
+          ["1366 x 900", "Canvas at least 120 x 120 CSS pixels"],
+          ["Pixel ratio", "Clamped to at most 2"],
+          ["Reduced motion", "Static first frame remains visible"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Reproduce a blurry or stretched canvas",
+        intro: "Separate layout size, drawing-buffer size, and camera projection while debugging.",
+        items: [
+          "Record the canvas CSS width and height.",
+          "Record canvas.width and canvas.height after pixel-ratio scaling.",
+          "Confirm camera.aspect uses the same CSS dimensions.",
+          "Resize the container without reloading and repeat the measurements."
+        ]
+      }
+    ]
+  },
+  "three-js-shader-material-starter": {
+    cluster: "Rendering",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Start from a visible wave shader",
+        intro:
+          "The generator publishes its complete default GLSL in the HTML and enhances it with a WebGL preview when available.",
+        href: "/tools/shader-starter/",
+        label: "Open the Shader Starter",
+        checks: ["Static code is readable without JavaScript", "uTime updates the wave", "Solid fallback guidance remains if WebGL fails"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Prove fragment output before adding effects",
+        intro: "A black shader is easier to isolate when the first test has no uniforms or texture lookups.",
+        before:
+          "void main() {\n  float noise = texture2D(uNoise, vUv).r;\n  gl_FragColor = vec4(palette(noise + uTime), 1.0);\n}",
+        after:
+          "void main() {\n  gl_FragColor = vec4(1.0, 0.2, 0.1, 1.0);\n}\n// Then display vUv, then add one uniform at a time."
+      },
+      {
+        type: "metric-table",
+        heading: "Default shader contract",
+        intro: "The starter keeps the initial surface intentionally small and inspectable.",
+        columns: ["Setting", "Default"],
+        rows: [
+          ["Pattern", "Wave bands"],
+          ["Colors", "#2f8f83 and #151b24"],
+          ["Speed", "1.2"],
+          ["Required uniforms", "uTime, uColorA, uColorB"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Layer the shader in four passes",
+        intro: "Each pass should compile and render before the next concern is introduced.",
+        items: [
+          "Render a constant fragment color.",
+          "Render UV coordinates as red and green.",
+          "Add the color uniforms and verify their values.",
+          "Add time animation last and check reduced-motion behavior."
+        ]
+      }
+    ]
+  },
+  "three-js-lighting-product-viewer": {
+    cluster: "Rendering",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Compare four lighting intentions",
+        intro:
+          "The preset tool keeps the model constant while changing the background, hemisphere light, direct lights, and exposure.",
+        href: "/tools/lighting-presets/",
+        label: "Open Lighting Presets",
+        checks: ["Studio product", "Softbox neutral", "Dusk contrast", "Matte clay"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Keep ambient and directional roles separate",
+        intro: "A single strong light can make the front readable while crushing the unlit side.",
+        before:
+          "scene.add(new THREE.DirectionalLight(0xffffff, 8));",
+        after:
+          "scene.add(new THREE.HemisphereLight(0xffffff, 0x263342, 1.7));\nconst key = new THREE.DirectionalLight(0xffffff, 2.8);\nkey.position.set(3, 4.5, 4);\nscene.add(key);"
+      },
+      {
+        type: "metric-table",
+        heading: "Studio preset record",
+        intro: "The default code is present in the page source before the live preview starts.",
+        columns: ["Element", "Recorded setting"],
+        rows: [
+          ["Exposure", "1.0"],
+          ["Background", "#f2f6fb"],
+          ["Hemisphere intensity", "1.7"],
+          ["Key / rim intensity", "2.8 / 1.2"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Diagnose a black or flat GLB",
+        intro: "Confirm the material pipeline before compensating with stronger lights.",
+        items: [
+          "Render a known MeshStandardMaterial under the preset.",
+          "Check renderer output color space and tone mapping.",
+          "Confirm base-color textures use the correct color space.",
+          "Add the project environment map, then retune direct lights."
+        ]
+      }
+    ]
+  },
+  "three-js-performance-budget": {
+    cluster: "Performance",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Use the examples as isolated cost probes",
+        intro:
+          "The gallery separates a mesh, a point cloud, and a shader plane so a regression can be associated with one rendering pattern.",
+        href: "/tools/examples/",
+        label: "Open the examples gallery",
+        checks: ["One pattern per canvas", "Offscreen work can be paused", "Mobile layout remains readable"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Do not render unchanged scenes forever",
+        intro: "A continuous loop spends battery even when the page is offscreen or visually static.",
+        before:
+          "function animate() {\n  requestAnimationFrame(animate);\n  renderer.render(scene, camera);\n}\nanimate();",
+        after:
+          "let dirty = true;\nfunction frame() {\n  if (visible && dirty) renderer.render(scene, camera);\n  dirty = controls.update();\n  requestAnimationFrame(frame);\n}\nframe();"
+      },
+      {
+        type: "metric-table",
+        heading: "Pre-publish budget signals",
+        intro: "These are review triggers, not universal performance guarantees.",
+        columns: ["Signal", "Review trigger"],
+        rows: [
+          ["Device pixel ratio", "Above 2"],
+          ["Texture dimensions", "Larger than the visible camera need"],
+          ["Repeated geometry", "One draw call per identical object"],
+          ["Animation", "Continues while offscreen or hidden"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Measure before removing visual features",
+        intro: "Change one cost center and repeat the same interaction on the same viewport.",
+        items: [
+          "Record renderer.info draw calls and triangles.",
+          "Record texture dimensions and compressed transfer size.",
+          "Test the 390 x 844 viewport with pixel ratio capped.",
+          "Pause offscreen rendering and compare the browser performance trace."
+        ]
+      }
+    ]
+  },
+  "three-js-scene-debugging-checklist": {
+    cluster: "Debugging",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Return to a known-good rendered object",
+        intro:
+          "The GLB Viewer sample proves that the renderer, camera, geometry, material, and lights can produce a visible frame.",
+        href: "/tools/gltf-viewer/",
+        label: "Render the control sample",
+        checks: ["Visible cube", "Non-zero geometry metrics", "Camera fitted from bounds"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Replace the unknown scene with a diagnostic cube",
+        intro: "Debugging every imported asset and material assumption at once hides the first failing layer.",
+        before:
+          "loader.load(assetUrl, ({ scene: model }) => {\n  scene.add(model);\n  startPostprocessing();\n});",
+        after:
+          "scene.add(new THREE.Mesh(\n  new THREE.BoxGeometry(1, 1, 1),\n  new THREE.MeshBasicMaterial({ color: 0xff5533 })\n));\ncamera.position.set(0, 0, 3);\nrenderer.render(scene, camera);"
+      },
+      {
+        type: "metric-table",
+        heading: "Diagnostic layer record",
+        intro: "A layer passes only when it produces a visible or inspectable result.",
+        columns: ["Layer", "Pass evidence"],
+        rows: [
+          ["Renderer", "Canvas has a non-empty frame"],
+          ["Camera", "Diagnostic cube is inside frustum"],
+          ["Asset", "Bounds and mesh count are finite"],
+          ["Material / light", "Basic material works before PBR"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Bisect a blank canvas",
+        intro: "Keep each successful layer in place while adding the next one back.",
+        items: [
+          "Set a clear color and render a BasicMaterial cube.",
+          "Add camera and BoxHelper diagnostics.",
+          "Load the asset but keep the diagnostic material.",
+          "Restore project materials, lights, controls, and effects one group at a time."
+        ]
+      }
+    ]
+  },
+  "three-js-raycaster-picking-checklist": {
+    cluster: "Interaction",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Use a bounded canvas before wiring picking",
+        intro:
+          "The examples page provides canvas-sized scenes that make pointer coordinate normalization easier to inspect.",
+        href: "/tools/examples/",
+        label: "Open the examples",
+        checks: ["Pointer math uses canvas bounds", "The pick list is explicit", "Mobile targets need forgiving hit areas"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Normalize against the canvas, not the window",
+        intro: "Window coordinates are wrong when the canvas is inset, scrolled, or smaller than the viewport.",
+        before:
+          "pointer.x = event.clientX / window.innerWidth * 2 - 1;\npointer.y = -(event.clientY / window.innerHeight) * 2 + 1;",
+        after:
+          "const rect = canvas.getBoundingClientRect();\npointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;\npointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;"
+      },
+      {
+        type: "metric-table",
+        heading: "Pointer normalization examples",
+        intro: "These values are derived directly from the normalized-device-coordinate formula.",
+        columns: ["Canvas-relative position", "NDC result"],
+        rows: [
+          ["Top-left", "(-1, 1)"],
+          ["Center", "(0, 0)"],
+          ["Bottom-right", "(1, -1)"],
+          ["Outside bounds", "Ignore before raycast"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Reproduce a missed click",
+        intro: "Record the coordinate transform and intersections before changing object geometry.",
+        items: [
+          "Log the canvas rectangle and pointer coordinates.",
+          "Confirm the normalized point falls between -1 and 1.",
+          "Raycast against an explicit recursive object list.",
+          "Inspect the closest intersection, object visibility, layers, and instance ID."
+        ]
+      }
+    ]
+  },
+  "three-js-canvas-screenshot-export": {
+    cluster: "Debugging",
+    blocks: [
+      {
+        type: "demo",
+        heading: "Export from a scene with known canvas content",
+        intro:
+          "The examples gallery supplies small scenes for checking render timing and the difference between WebGL pixels and surrounding DOM.",
+        href: "/tools/examples/",
+        label: "Open a sample scene",
+        checks: ["Canvas contains a rendered frame", "DOM labels are not part of canvas output", "Filename and MIME type are explicit"]
+      },
+      {
+        type: "code-comparison",
+        heading: "Render immediately before capture",
+        intro: "Capturing an old or cleared drawing buffer can produce an empty image.",
+        before:
+          "downloadLink.href = renderer.domElement.toDataURL();\ndownloadLink.click();",
+        after:
+          "renderer.render(scene, camera);\nrenderer.domElement.toBlob((blob) => {\n  if (!blob) return showExportError();\n  downloadBlob(blob, 'threejs-scene.png');\n}, 'image/png');"
+      },
+      {
+        type: "metric-table",
+        heading: "Export contract",
+        intro: "The output should describe exactly what the browser is asked to create.",
+        columns: ["Property", "Recorded choice"],
+        rows: [
+          ["Format", "image/png"],
+          ["Capture source", "WebGL canvas only"],
+          ["Frame timing", "Explicit render before toBlob"],
+          ["Transparent background", "Only when renderer alpha and clear alpha allow it"]
+        ]
+      },
+      {
+        type: "steps",
+        heading: "Verify a screenshot button",
+        intro: "Test visible output, failure feedback, and repeated use.",
+        items: [
+          "Render the intended camera frame immediately before capture.",
+          "Create a Blob and reject a null result with an inline message.",
+          "Download with a deterministic filename and revoke the object URL.",
+          "Repeat after resize and after changing the scene background."
+        ]
+      }
+    ]
+  }
+};
+
+const retirementMap = {
+  "three-js-particles-buffergeometry": {
+    targetSlug: "three-js-performance-budget",
+    reason: "The particle budgeting and draw-cost guidance now lives in the performance guide."
+  },
+  "three-js-rotation-pivot-center": {
+    targetSlug: "fit-camera-to-object-three-js",
+    reason: "Bounds, centers, controls targets, and pivot checks are now documented together."
+  },
+  "three-js-color-management-pbr": {
+    targetSlug: "three-js-lighting-product-viewer",
+    reason: "The color-management baseline is now part of the tested product-lighting workflow."
+  },
+  "three-js-static-site-seo": {
+    targetSlug: null,
+    title: "Retired Three.js Site Structure Guide",
+    reason: "This search-oriented article has been retired. Vavist now documents tools through user tasks and tested examples."
+  },
+  "three-js-transparent-background-screenshot": {
+    targetSlug: "three-js-canvas-screenshot-export",
+    reason: "Transparent backgrounds and capture timing are now covered in one screenshot export guide."
+  },
+  "three-js-orbitcontrols-damping": {
+    targetSlug: "fit-camera-to-object-three-js",
+    reason: "Controls targets, damping, and fitted camera movement are now maintained together."
+  },
+  "three-js-shadows-without-black-scenes": {
+    targetSlug: "three-js-lighting-product-viewer",
+    reason: "Shadow and light-balance checks now live in the product-lighting guide."
+  },
+  "three-js-texture-loading-color-space": {
+    targetSlug: "three-js-gltf-loader-checklist",
+    reason: "Texture color-space and asset-loading checks are now part of the import checklist."
+  },
+  "three-js-draco-ktx2-compression": {
+    targetSlug: "three-js-gltf-loader-checklist",
+    reason: "Decoder configuration and compression decisions are now part of the import checklist."
+  },
+  "three-js-html-labels-css2d": {
+    targetSlug: null,
+    reason: "This article has been retired while its examples are rebuilt and retested."
+  },
+  "three-js-instancing-many-objects": {
+    targetSlug: "three-js-performance-budget",
+    reason: "Instancing is now presented as one option inside the broader rendering budget."
+  },
+  "three-js-environment-maps-glb-viewer": {
+    targetSlug: "three-js-lighting-product-viewer",
+    reason: "Environment lighting now lives beside the direct-light presets it affects."
+  },
+  "three-js-mobile-performance-checklist": {
+    targetSlug: "three-js-performance-budget",
+    reason: "Mobile budgets now live in the performance guide, with responsive sizing documented separately."
+  },
+  "three-js-mistakes-that-break-webgl-scenes": {
+    targetSlug: "three-js-scene-debugging-checklist",
+    reason: "The mistake list has been consolidated into a reproducible debugging sequence."
+  }
+};
+
+const coreSlugs = Object.keys(coreGuideDetails);
+
+export const guides = coreSlugs.map((slug) => {
+  const guide = allGuideDrafts.find((item) => item.slug === slug);
+  const details = coreGuideDetails[slug];
+  if (!guide) throw new Error(`Missing core guide draft: ${slug}`);
+  return {
+    ...guide,
+    authorId: "jzy",
+    cluster: details.cluster,
+    status: "core",
+    updated: "2026-08-13",
+    lastTested: "2026-08-13",
+    testedWith: {
+      ...testedWith,
+      browsers: [...testedWith.browsers],
+      viewports: [...testedWith.viewports]
+    },
+    blocks: details.blocks,
+    changelog: [
+      {
+        date: "2026-08-13",
+        note: "Rewritten around a reproducible demo, explicit test record, code comparison, and known platform limits."
+      }
+    ]
+  };
+});
+
+export const retiredGuides = Object.entries(retirementMap).map(([slug, retirement]) => {
+  const guide = allGuideDrafts.find((item) => item.slug === slug);
+  if (!guide) throw new Error(`Missing retired guide draft: ${slug}`);
+  return {
+    slug,
+    title: guide.title,
+    description: guide.description,
+    status: "retired",
+    updated: "2026-08-13",
+    ...retirement
+  };
+});
 
 export const getGuide = (slug) => guides.find((guide) => guide.slug === slug);
+
+export const getRetiredGuide = (slug) => retiredGuides.find((guide) => guide.slug === slug);

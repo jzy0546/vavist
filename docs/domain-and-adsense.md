@@ -4,7 +4,7 @@ This file lists the manual steps needed to move the MVP from a local static site
 
 ## Values Needed From You
 
-- Final domain, for example `vavist.com`
+- Final domain, currently `vavist.com`
 - GitHub username and repository name
 - Google Analytics Measurement ID, for example `G-48SYW15X9Z`
 - Google Search Console verification method
@@ -62,17 +62,29 @@ Recommended order:
 1. Publish the MVP.
 2. Let Google index the pages.
 3. Watch Search Console for impressions and indexed URLs.
-4. Expand to at least 20 to 30 useful pages before applying.
-5. Add the site in Google AdSense.
-6. Copy your publisher ID and ads.txt line.
-7. Build with:
+4. Confirm the 10 maintained guides and five tools have been recrawled.
+5. Confirm the 14 consolidated guide URLs are excluded from the sitemap and show `noindex,follow`.
+6. Add the site in Google AdSense.
+7. Copy your publisher ID and ads.txt line.
+8. Keep ad loading off while the site is under review:
 
 ```powershell
 $env:ADSENSE_CLIENT="ca-pub-3178114530361936"
+$env:ADSENSE_MODE="off"
 $env:ADS_TXT_ACCOUNT="google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0"
 npm run build
 ```
 
 The build will generate `dist/ads.txt` only when `ADS_TXT_ACCOUNT` is set.
+After approval and consent setup, `ADSENSE_MODE=content` permits the loader only
+on maintained guide pages.
 
 Do not publish fake AdSense IDs. Do not promise users that text can bypass AI detection. Keep ads away from buttons and tool controls after approval.
+
+## Legacy subdomain handoff
+
+The `threejs-lab` repository now builds noindex migration shells. Deploy the
+main domain first, verify every target returns HTTP 200, and only then manually
+dispatch the legacy Pages workflow. GitHub Pages does not provide a configurable
+HTTP 301 in this setup, so the shells use a visible link, canonical, meta refresh,
+and `location.replace` while preserving query parameters and fragments.
