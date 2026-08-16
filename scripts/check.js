@@ -265,6 +265,44 @@ const checkSocialImage = async () => {
   }
 };
 
+const checkAnalyticsInstrumentation = async () => {
+  const mainApp = await readFile(path.join(distDir, "assets", "app.js"), "utf8");
+  const mainAnalytics = await readFile(path.join(distDir, "assets", "analytics.js"), "utf8");
+  const homeHtml = await readFile(path.join(distDir, "index.html"), "utf8");
+  const guideHtml = await readFile(
+    path.join(distDir, "guides", "three-js-gltf-loader-checklist", "index.html"),
+    "utf8"
+  );
+  const mainInstrumentation = `${homeHtml}\n${guideHtml}\n${mainApp}\n${mainAnalytics}`;
+  const toolAssets = await walk(path.join(distDir, "tools", "assets"));
+  const toolJavaScript = (
+    await Promise.all(
+      toolAssets
+        .filter((file) => file.endsWith(".js"))
+        .map((file) => readFile(file, "utf8"))
+    )
+  ).join("\n");
+
+  for (const token of ["vavist_analytics_off", "open_guide_source", "scroll_depth"]) {
+    if (!mainInstrumentation.includes(token)) {
+      fail(`Main-site analytics bundle is missing ${token}`);
+    }
+  }
+  for (const token of [
+    "vavist_analytics_off",
+    "load_sample_model",
+    "load_local_model",
+    "calculate_fov",
+    "customize_shader",
+    "apply_lighting_preset",
+    "copy_code"
+  ]) {
+    if (!toolJavaScript.includes(token)) {
+      fail(`Tool analytics bundle is missing ${token}`);
+    }
+  }
+};
+
 const check = async () => {
   if (!(await exists(distDir))) fail("dist/ is missing. Run npm run build first.");
 
@@ -286,6 +324,13 @@ const check = async () => {
       expectedRobots: "noindex,follow",
       expectedCanonical
     });
+    const content = await readFile(filePath, "utf8");
+    if (guide.targetSlug && guide.targetAnchor) {
+      const expectedHref = `/guides/${guide.targetSlug}/#${guide.targetAnchor}`;
+      if (!content.includes(`href="${expectedHref}"`)) {
+        fail(`${route} must link to exact maintained section ${expectedHref}`);
+      }
+    }
   }
 
   const files = await walk(distDir);
@@ -312,6 +357,7 @@ const check = async () => {
   if (!(await exists(path.join(distDir, "robots.txt")))) fail("robots.txt is missing");
   await checkSocialImage();
   await checkSitemap();
+  await checkAnalyticsInstrumentation();
 
   console.log(`Checked ${htmlFiles.length} HTML files successfully.`);
 };

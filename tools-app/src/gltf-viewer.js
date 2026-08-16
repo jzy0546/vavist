@@ -1,5 +1,5 @@
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { initSite } from "./shared/site.js";
+import { initSite, sendToolAnalyticsEvent } from "./shared/site.js";
 import {
   THREE,
   addGrid,
@@ -51,7 +51,7 @@ if (canvas) {
       controls.update();
       renderer.render(scene, camera);
     });
-    loadSampleModel();
+    loadSampleModel("automatic");
   } catch {
     canvas.parentElement.dataset.webglReady = "false";
     setStatus("WebGL preview unavailable. Static sample metrics and guidance remain below.");
@@ -86,9 +86,9 @@ if (dropzone) {
   });
 }
 
-sampleButton?.addEventListener("click", loadSampleModel);
+sampleButton?.addEventListener("click", () => loadSampleModel("button"));
 
-function loadSampleModel() {
+function loadSampleModel(source = "button") {
   if (!scene) return;
   setStatus("Loading the built-in sample GLB.");
   const loader = new GLTFLoader();
@@ -96,7 +96,13 @@ function loadSampleModel() {
     "/tools/sample-cube.glb",
     (gltf) => {
       setModel(gltf.scene);
-      updateMetrics(gltf.scene, "Built-in sample ready");
+      const result = updateMetrics(gltf.scene, "Built-in sample ready");
+      if (source === "button") {
+        sendToolAnalyticsEvent("load_sample_model", {
+          mesh_count: result.meshCount,
+          triangle_count: result.triangles
+        });
+      }
     },
     undefined,
     () => {
@@ -104,6 +110,11 @@ function loadSampleModel() {
       setModel(fallback);
       updateMetrics(fallback, "Generated fallback ready");
       setStatus("Sample GLB could not load. A generated fallback is shown.");
+      if (source === "button") {
+        sendToolAnalyticsEvent("tool_error", {
+          error_category: "sample_load"
+        });
+      }
     }
   );
 }
@@ -111,6 +122,9 @@ function loadSampleModel() {
 function loadModelFile(file) {
   if (!/\.(glb|gltf)$/i.test(file.name)) {
     setStatus("Choose a .glb or .gltf file.");
+    sendToolAnalyticsEvent("tool_error", {
+      error_category: "unsupported_model_type"
+    });
     return;
   }
 
@@ -122,13 +136,21 @@ function loadModelFile(file) {
     (gltf) => {
       URL.revokeObjectURL(url);
       setModel(gltf.scene);
-      updateMetrics(gltf.scene, file.name);
+      const result = updateMetrics(gltf.scene, file.name);
       setStatus(`${file.name} loaded locally.`);
+      sendToolAnalyticsEvent("load_local_model", {
+        file_type: file.name.toLowerCase().endsWith(".gltf") ? "gltf" : "glb",
+        mesh_count: result.meshCount,
+        triangle_count: result.triangles
+      });
     },
     undefined,
     (error) => {
       URL.revokeObjectURL(url);
       setStatus(`Could not load this file: ${error.message || "unknown error"}`);
+      sendToolAnalyticsEvent("tool_error", {
+        error_category: "model_parse"
+      });
     }
   );
 }
@@ -163,6 +185,12 @@ function updateMetrics(model, label) {
   metrics.triangles.textContent = formatNumber(Math.round(triangles));
   metrics.size.textContent = `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`;
   setStatus(`${label}: ${meshCount} mesh${meshCount === 1 ? "" : "es"} in scene.`);
+  return {
+    meshCount,
+    vertices,
+    triangles: Math.round(triangles),
+    bounds: [size.x, size.y, size.z].map((value) => Number(value.toFixed(2)))
+  };
 }
 
 function disposeObject(object) {

@@ -1,4 +1,4 @@
-import { initSite } from "./shared/site.js";
+import { initSite, sendToolAnalyticsEvent } from "./shared/site.js";
 import { THREE, createRenderer, resizeRenderer, runScene } from "./shared/three-utils.js";
 
 initSite();
@@ -17,6 +17,7 @@ let camera;
 let renderer;
 let mesh;
 let material;
+let analyticsTimer;
 
 if (canvas) {
   const container = canvas.parentElement;
@@ -42,7 +43,15 @@ if (canvas) {
   }
 }
 
-Object.values(inputs).forEach((input) => input?.addEventListener("input", updateShader));
+Object.values(inputs).forEach((input) =>
+  input?.addEventListener("input", () => {
+    const result = updateShader();
+    window.clearTimeout(analyticsTimer);
+    analyticsTimer = window.setTimeout(() => {
+      sendToolAnalyticsEvent("customize_shader", result);
+    }, 650);
+  })
+);
 updateShader();
 
 function updateShader() {
@@ -67,6 +76,10 @@ function updateShader() {
   }
 
   if (code) code.textContent = buildSnippet(colorA, colorB, speed, pattern, fragmentShader);
+  return {
+    shader_pattern: pattern,
+    animation_speed: speed
+  };
 }
 
 function getVertexShader() {

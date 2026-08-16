@@ -1,4 +1,4 @@
-import { initSite } from "./shared/site.js";
+import { initSite, sendToolAnalyticsEvent } from "./shared/site.js";
 import {
   THREE,
   addGrid,
@@ -62,6 +62,7 @@ let renderer;
 let controls;
 let model;
 let lightGroup;
+let analyticsTimer;
 
 if (canvas) {
   const container = canvas.parentElement;
@@ -87,8 +88,16 @@ if (canvas) {
   }
 }
 
-presetSelect?.addEventListener("input", updatePreset);
-exposureInput?.addEventListener("input", updatePreset);
+const handlePresetInput = () => {
+  const result = updatePreset();
+  window.clearTimeout(analyticsTimer);
+  analyticsTimer = window.setTimeout(() => {
+    sendToolAnalyticsEvent("apply_lighting_preset", result);
+  }, 650);
+};
+
+presetSelect?.addEventListener("input", handlePresetInput);
+exposureInput?.addEventListener("input", handlePresetInput);
 updatePreset();
 
 function updatePreset() {
@@ -109,6 +118,10 @@ function updatePreset() {
     renderer.toneMappingExposure = exposure;
   }
   if (code) code.textContent = buildLightingSnippet(preset, exposure);
+  return {
+    preset_name: presetSelect?.value || "studio",
+    exposure: Number(exposure.toFixed(2))
+  };
 }
 
 function buildLightingSnippet(preset, exposure) {

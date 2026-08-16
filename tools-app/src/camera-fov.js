@@ -1,4 +1,4 @@
-import { initSite } from "./shared/site.js";
+import { initSite, sendToolAnalyticsEvent } from "./shared/site.js";
 import { THREE, addGrid, createRenderer, resizeRenderer, runScene } from "./shared/three-utils.js";
 
 initSite();
@@ -22,6 +22,7 @@ let camera;
 let renderer;
 let object;
 let frame;
+let analyticsTimer;
 
 if (canvas) {
   const container = canvas.parentElement;
@@ -57,7 +58,15 @@ if (canvas) {
   });
 }
 
-Object.values(inputs).forEach((input) => input?.addEventListener("input", update));
+Object.values(inputs).forEach((input) =>
+  input?.addEventListener("input", () => {
+    const result = update();
+    window.clearTimeout(analyticsTimer);
+    analyticsTimer = window.setTimeout(() => {
+      sendToolAnalyticsEvent("calculate_fov", result);
+    }, 650);
+  })
+);
 update();
 
 function update() {
@@ -88,6 +97,14 @@ function update() {
     frame.scale.set(visibleWidth, framedHeight, 1);
     frame.position.y = objectHeight / 2;
   }
+  return {
+    object_height: objectHeight,
+    camera_distance: distance,
+    aspect_ratio: Number(aspect.toFixed(3)),
+    frame_margin: margin,
+    vertical_fov: Number(verticalFov.toFixed(2)),
+    horizontal_fov: Number(horizontalFov.toFixed(2))
+  };
 }
 
 function buildSnippet(objectHeight, distance, aspect, margin, fov) {

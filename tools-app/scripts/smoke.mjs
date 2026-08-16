@@ -86,14 +86,30 @@ async function checkInteractiveTools(browser) {
     buffer: Buffer.from("not a model")
   });
   await expectText(page, "#viewer-status", "Choose a .glb or .gltf file.");
+  await expectAnalyticsEvent(page, "tool_error");
   await page.locator("#load-sample").click();
   await page.waitForFunction(() => /Built-in sample ready/.test(document.querySelector("#viewer-status")?.textContent || ""));
+  await expectAnalyticsEvent(page, "load_sample_model");
 
   await page.goto(`${baseUrl}/tools/camera-fov/`, { waitUntil: "networkidle" });
   await page.locator("#camera-distance").fill("10");
   await expectText(page, "#vertical-fov", "12.55 deg");
+  await expectAnalyticsEvent(page, "calculate_fov");
   await page.locator("[data-copy-target='#fov-code']").click();
   await expectText(page, "[data-copy-target='#fov-code']", "Copied");
+  await expectAnalyticsEvent(page, "copy_code");
+
+  await page.goto(`${baseUrl}/tools/shader-starter/`, { waitUntil: "networkidle" });
+  await page.locator("#shader-pattern").selectOption("radial");
+  await expectAnalyticsEvent(page, "customize_shader");
+  await page.locator("[data-copy-target='#shader-code']").click();
+  await expectAnalyticsEvent(page, "copy_code");
+
+  await page.goto(`${baseUrl}/tools/lighting-presets/`, { waitUntil: "networkidle" });
+  await page.locator("#lighting-preset").selectOption("dusk");
+  await expectAnalyticsEvent(page, "apply_lighting_preset");
+  await page.locator("[data-copy-target='#lighting-code']").click();
+  await expectAnalyticsEvent(page, "copy_code");
 
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of [
@@ -141,6 +157,18 @@ async function assertNoHorizontalOverflow(page, label) {
     () => document.documentElement.scrollWidth - window.innerWidth
   );
   if (overflow > 1) throw new Error(`${label}: horizontal overflow ${overflow}px`);
+}
+
+async function expectAnalyticsEvent(page, eventName) {
+  await page.waitForFunction(
+    (expected) =>
+      Array.from(window.dataLayer || []).some((entry) => {
+        const values = Array.from(entry || []);
+        return values[0] === "event" && values[1] === expected;
+      }),
+    eventName,
+    { timeout: 3000 }
+  );
 }
 
 function getLaunchOptions() {

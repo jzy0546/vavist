@@ -195,11 +195,22 @@ const runBrowserChecks = async ({ baseUrl, evidenceDir }) => {
           await menuButton.click();
           await page.waitForSelector('[data-scene-ready="true"]', { timeout: 15000 });
           const enhancements = await page.evaluate(() => ({
-            analytics: Boolean(document.querySelector('script[src*="googletagmanager.com/gtag"]')),
+            analyticsConfigured: Array.from(window.dataLayer || []).some((entry) => {
+              const values = Array.from(entry || []);
+              return values[0] === "config";
+            }),
+            analyticsNetworkLoaded: Boolean(
+              document.querySelector('script[src*="googletagmanager.com/gtag"]')
+            ),
             adsense: Boolean(document.querySelector('script[src*="pagead2.googlesyndication.com/pagead/js"]')),
             canvasWidth: document.querySelector("#lab-canvas")?.getBoundingClientRect().width || 0
           }));
-          if (!enhancements.analytics || enhancements.adsense || enhancements.canvasWidth <= 0) {
+          if (
+            !enhancements.analyticsConfigured ||
+            enhancements.analyticsNetworkLoaded ||
+            enhancements.adsense ||
+            enhancements.canvasWidth <= 0
+          ) {
             fail(`${route} deferred enhancements did not activate`);
           }
         }

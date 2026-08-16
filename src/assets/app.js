@@ -198,13 +198,24 @@ const loadExternalScript = (src, attributes = {}) => {
 
 const initDeferredEnhancements = () => {
   const events = ["pointerdown", "pointermove", "keydown", "scroll", "touchstart"];
-  const start = () => {
-    events.forEach((event) => window.removeEventListener(event, start));
+  let analyticsStarted = false;
+  let enhancementsStarted = false;
+
+  const startAnalytics = () => {
+    if (analyticsStarted) return;
+    analyticsStarted = true;
     const analyticsId = window.__vavistAnalyticsId;
-    const adsenseClient = window.__vavistAdsenseClient;
-    if (analyticsId) {
+    if (analyticsId && window.__vavistAnalyticsCanLoad !== false) {
       loadExternalScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(analyticsId)}`);
     }
+  };
+
+  const start = () => {
+    if (enhancementsStarted) return;
+    enhancementsStarted = true;
+    events.forEach((event) => window.removeEventListener(event, start));
+    startAnalytics();
+    const adsenseClient = window.__vavistAdsenseClient;
     if (adsenseClient) {
       loadExternalScript(
         `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(adsenseClient)}`,
@@ -216,6 +227,7 @@ const initDeferredEnhancements = () => {
     });
   };
   events.forEach((event) => window.addEventListener(event, start, { once: true, passive: true }));
+  window.setTimeout(startAnalytics, 1800);
 };
 
 const initHealthCheck = () => {

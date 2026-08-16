@@ -1,5 +1,11 @@
 export const sendAnalyticsEvent = (eventName, parameters = {}) => {
-  if (!eventName || typeof window.gtag !== "function") return;
+  if (
+    !eventName ||
+    window.__vavistAnalyticsDisabled === true ||
+    typeof window.gtag !== "function"
+  ) {
+    return;
+  }
   window.gtag("event", eventName, {
     ...parameters,
     transport_type: "beacon"

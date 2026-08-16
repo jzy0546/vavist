@@ -68,18 +68,34 @@ const analyticsScript = () => {
   const id = html(site.gaMeasurementId);
   return `
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('consent', 'default', {
-        ad_storage: 'denied',
-        analytics_storage: 'denied',
-        ad_user_data: 'denied',
-        ad_personalization: 'denied',
-        wait_for_update: 500
-      });
-      gtag('js', new Date());
-      gtag('config', '${id}', { transport_type: 'beacon' });
-      window.__vavistAnalyticsId = '${id}';
+      (() => {
+        const params = new URLSearchParams(window.location.search);
+        try {
+          if (params.get('analytics') === 'off') {
+            sessionStorage.setItem('vavist_analytics_off', '1');
+          }
+        } catch {}
+        const localHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+        let optedOut = false;
+        try {
+          optedOut = sessionStorage.getItem('vavist_analytics_off') === '1';
+        } catch {}
+        window.__vavistAnalyticsDisabled = optedOut;
+        window.__vavistAnalyticsCanLoad = !localHost && !optedOut;
+        if (optedOut) return;
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = window.gtag || function(){dataLayer.push(arguments);};
+        gtag('consent', 'default', {
+          ad_storage: 'denied',
+          analytics_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          wait_for_update: 500
+        });
+        gtag('js', new Date());
+        gtag('config', '${id}', { transport_type: 'beacon' });
+        window.__vavistAnalyticsId = '${id}';
+      })();
     </script>`;
 };
 
@@ -336,9 +352,9 @@ const renderHome = () => {
       </div>
       <div class="hero-shade" aria-hidden="true"></div>
       <div class="hero-content">
-        <p class="eyebrow">Vavist main entrance</p>
-        <h1 id="home-title">Three.js Lab</h1>
-        <p class="hero-text">A browser-native workspace for inspecting GLB files, framing cameras, tuning shaders, and copying practical Three.js patterns.</p>
+        <p class="eyebrow">Three.js Lab by Vavist</p>
+        <h1 id="home-title">Three.js tools for GLB, camera, shaders, and lighting.</h1>
+        <p class="hero-text">Inspect a local model, calculate a reproducible camera frame, preview shader and lighting code, then verify the result before publishing. No account or file upload is required.</p>
         <div class="hero-actions">
           <a class="button primary" href="${html(labHref("/gltf-viewer/"))}"${analyticsAttrs({
             event: "open_lab_tool",
@@ -359,10 +375,10 @@ const renderHome = () => {
         <div class="hero-router" aria-label="Start with a Three.js problem">
           ${homeProblemRoutes.map(problemRouteCard).join("\n")}
         </div>
-        <dl class="hero-metrics" aria-label="Lab coverage">
-          <div><dt>5</dt><dd>focused tools</dd></div>
-          <div><dt>${guides.length}</dt><dd>builder guides</dd></div>
-          <div><dt>1</dt><dd>publishing checklist</dd></div>
+        <dl class="hero-metrics" aria-label="Verified sample results">
+          <div><dt>Local</dt><dd>GLB files stay on your device</dd></div>
+          <div><dt>24.81°</dt><dd>tested default vertical FOV</dd></div>
+          <div><dt>0 ads</dt><dd>all five tools stay ad-free</dd></div>
         </dl>
       </div>
     </section>
@@ -811,7 +827,11 @@ const renderGuideBlock = (block) => {
     return `<section class="article-section evidence-block evidence-demo" id="${slugText(block.heading)}">
       ${heading}${intro}
       <ul>${block.checks.map((item) => `<li>${html(item)}</li>`).join("\n")}</ul>
-      <a class="button primary" href="${routeUrl(block.href)}">${html(block.label)}</a>
+      <a class="button primary" href="${routeUrl(block.href)}"${analyticsAttrs({
+        event: "open_guide_demo",
+        label: slugText(block.heading),
+        destination: pathFor(block.href)
+      })}>${html(block.label)}</a>
     </section>`;
   }
   if (block.type === "code-comparison") {
@@ -926,7 +946,14 @@ const renderGuide = (guide) => {
             <h2>Sources and further reading</h2>
             <ul class="source-list">
               ${guide.sources
-                .map((source) => `<li><a href="${html(source.url)}">${html(source.label)}</a></li>`)
+                .map(
+                  (source) =>
+                    `<li><a href="${html(source.url)}"${analyticsAttrs({
+                      event: "open_guide_source",
+                      label: `${guide.slug}:${source.label}`,
+                      destination: source.url
+                    })}>${html(source.label)}</a></li>`
+                )
                 .join("\n")}
             </ul>
           </section>
@@ -992,6 +1019,8 @@ const renderGuide = (guide) => {
 const renderRetiredGuide = (guide) => {
   const route = `/guides/${guide.slug}/`;
   const target = guide.targetSlug ? `/guides/${guide.targetSlug}/` : null;
+  const targetHref =
+    target && guide.targetAnchor ? `${target}#${guide.targetAnchor}` : target;
   const canonical = target ? pathFor(target) : pathFor(route);
   const body = `
     <article class="content-page retired-guide">
@@ -1002,7 +1031,11 @@ const renderRetiredGuide = (guide) => {
         ${
           target
             ? `<p>The maintained version includes a current test record, code comparison, and reproducible steps.</p>
-              <a class="button primary" href="${routeUrl(target)}">Read the maintained guide</a>`
+              <a class="button primary" href="${routeUrl(targetHref)}"${analyticsAttrs({
+                event: "open_consolidated_guide",
+                label: guide.slug,
+                destination: pathFor(targetHref)
+              })}>Read the relevant maintained section</a>`
             : `<p>This page remains available as a retirement notice. Vavist excludes it from navigation and the sitemap, and JZY will publish a replacement only after rebuilding and testing its examples.</p>
               <a class="button secondary" href="${routeUrl("/guides/")}">Browse tested guides</a>`
         }

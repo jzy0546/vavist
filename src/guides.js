@@ -654,6 +654,9 @@ const testedWith = {
 const coreGuideDetails = {
   "three-js-gltf-loader-checklist": {
     cluster: "GLB import",
+    updated: "2026-08-16",
+    changeNote:
+      "Added a dedicated DRACO, KTX2, and texture color-space section so consolidated compression and texture URLs land on the maintained answer.",
     blocks: [
       {
         type: "demo",
@@ -673,6 +676,14 @@ const coreGuideDetails = {
           "const loader = new GLTFLoader();\nloader.load('/model.glb', ({ scene }) => root.add(scene));",
         after:
           "const loader = new GLTFLoader(manager);\nloader.setDRACOLoader(dracoLoader);\nloader.setKTX2Loader(ktx2Loader.detectSupport(renderer));\nloader.load(url, onLoad, onProgress, onError);"
+      },
+      {
+        type: "prose",
+        heading: "DRACO, KTX2, and texture color space",
+        paragraphs: [
+          "Configure DRACOLoader and KTX2Loader before the first model request, keep decoder paths beside the loader setup, and call KTX2Loader.detectSupport(renderer) with the renderer that will display the asset. Decoder files are additional production dependencies, so verify their URLs, cache headers, and cross-origin behavior instead of assuming the compressed GLB is self-contained.",
+          "Compression is not automatically a win for every asset. Compare transfer size, decoder cost, first visible frame, and texture memory against an uncompressed control model. Mark base-color and emissive textures as sRGB color data; keep normal, roughness, metalness, and occlusion maps in their non-color data space. Test these assumptions under a known light rig before changing material values."
+        ]
       },
       {
         type: "metric-table",
@@ -748,6 +759,9 @@ const coreGuideDetails = {
   },
   "fit-camera-to-object-three-js": {
     cluster: "Camera control",
+    updated: "2026-08-16",
+    changeNote:
+      "Added an OrbitControls damping section and routed the consolidated damping URL to that tested camera-control guidance.",
     blocks: [
       {
         type: "demo",
@@ -766,6 +780,14 @@ const coreGuideDetails = {
           "camera.position.z = 5;\ncamera.lookAt(0, 0, 0);",
         after:
           "const box = new THREE.Box3().setFromObject(object);\nconst center = box.getCenter(new THREE.Vector3());\nconst size = box.getSize(new THREE.Vector3());\nfitCameraToBounds(camera, controls, center, size);"
+      },
+      {
+        type: "prose",
+        heading: "OrbitControls damping after camera fit",
+        paragraphs: [
+          "Set controls.target to the measured object center in the same operation that moves the camera. When enableDamping is true, call controls.update() from the render loop until the controls settle; otherwise the camera can appear to ignore the new target or stop between two states. Start with a small dampingFactor and evaluate it on the same desktop and mobile viewports used for the framing check.",
+          "Keep one owner for animation. A fit transition, OrbitControls damping, and a second independent requestAnimationFrame loop can compete over camera position. Apply the fitted position and target, update the projection matrix, then let the existing controls loop converge from that known state."
+        ]
       },
       {
         type: "metric-table",
@@ -886,6 +908,9 @@ const coreGuideDetails = {
   },
   "three-js-lighting-product-viewer": {
     cluster: "Rendering",
+    updated: "2026-08-16",
+    changeNote:
+      "Added a PBR color-management baseline and routed the consolidated color-management URL to the maintained lighting workflow.",
     blocks: [
       {
         type: "demo",
@@ -904,6 +929,14 @@ const coreGuideDetails = {
           "scene.add(new THREE.DirectionalLight(0xffffff, 8));",
         after:
           "scene.add(new THREE.HemisphereLight(0xffffff, 0x263342, 1.7));\nconst key = new THREE.DirectionalLight(0xffffff, 2.8);\nkey.position.set(3, 4.5, 4);\nscene.add(key);"
+      },
+      {
+        type: "prose",
+        heading: "Color management baseline for PBR",
+        paragraphs: [
+          "Set renderer.outputColorSpace explicitly, keep base-color and emissive textures in the sRGB color space, and leave roughness, metalness, normal, and occlusion textures as non-color data. Check that baseline before changing light intensity: an incorrect texture interpretation can look like weak lighting, excessive exposure, or a broken material.",
+          "Tone mapping, exposure, direct lights, and environment reflections affect different parts of the final image. Hold the model and camera constant, compare one preset at a time, and use the same known material to separate a renderer configuration problem from an asset-specific problem."
+        ]
       },
       {
         type: "metric-table",
@@ -1119,14 +1152,17 @@ const coreGuideDetails = {
 const retirementMap = {
   "three-js-particles-buffergeometry": {
     targetSlug: "three-js-performance-budget",
+    targetAnchor: "pre-publish-budget-signals",
     reason: "The particle budgeting and draw-cost guidance now lives in the performance guide."
   },
   "three-js-rotation-pivot-center": {
     targetSlug: "fit-camera-to-object-three-js",
+    targetAnchor: "aim-at-the-measured-center",
     reason: "Bounds, centers, controls targets, and pivot checks are now documented together."
   },
   "three-js-color-management-pbr": {
     targetSlug: "three-js-lighting-product-viewer",
+    targetAnchor: "color-management-baseline-for-pbr",
     reason: "The color-management baseline is now part of the tested product-lighting workflow."
   },
   "three-js-static-site-seo": {
@@ -1136,22 +1172,27 @@ const retirementMap = {
   },
   "three-js-transparent-background-screenshot": {
     targetSlug: "three-js-canvas-screenshot-export",
+    targetAnchor: "export-contract",
     reason: "Transparent backgrounds and capture timing are now covered in one screenshot export guide."
   },
   "three-js-orbitcontrols-damping": {
     targetSlug: "fit-camera-to-object-three-js",
+    targetAnchor: "orbitcontrols-damping-after-camera-fit",
     reason: "Controls targets, damping, and fitted camera movement are now maintained together."
   },
   "three-js-shadows-without-black-scenes": {
     targetSlug: "three-js-lighting-product-viewer",
+    targetAnchor: "diagnose-a-black-or-flat-glb",
     reason: "Shadow and light-balance checks now live in the product-lighting guide."
   },
   "three-js-texture-loading-color-space": {
     targetSlug: "three-js-gltf-loader-checklist",
+    targetAnchor: "draco-ktx2-and-texture-color-space",
     reason: "Texture color-space and asset-loading checks are now part of the import checklist."
   },
   "three-js-draco-ktx2-compression": {
     targetSlug: "three-js-gltf-loader-checklist",
+    targetAnchor: "draco-ktx2-and-texture-color-space",
     reason: "Decoder configuration and compression decisions are now part of the import checklist."
   },
   "three-js-html-labels-css2d": {
@@ -1160,18 +1201,22 @@ const retirementMap = {
   },
   "three-js-instancing-many-objects": {
     targetSlug: "three-js-performance-budget",
+    targetAnchor: "pre-publish-budget-signals",
     reason: "Instancing is now presented as one option inside the broader rendering budget."
   },
   "three-js-environment-maps-glb-viewer": {
     targetSlug: "three-js-lighting-product-viewer",
+    targetAnchor: "pbr-materials-need-an-environment",
     reason: "Environment lighting now lives beside the direct-light presets it affects."
   },
   "three-js-mobile-performance-checklist": {
     targetSlug: "three-js-performance-budget",
+    targetAnchor: "measure-before-removing-visual-features",
     reason: "Mobile budgets now live in the performance guide, with responsive sizing documented separately."
   },
   "three-js-mistakes-that-break-webgl-scenes": {
     targetSlug: "three-js-scene-debugging-checklist",
+    targetAnchor: "bisect-a-blank-canvas",
     reason: "The mistake list has been consolidated into a reproducible debugging sequence."
   }
 };
@@ -1181,14 +1226,15 @@ const coreSlugs = Object.keys(coreGuideDetails);
 export const guides = coreSlugs.map((slug) => {
   const guide = allGuideDrafts.find((item) => item.slug === slug);
   const details = coreGuideDetails[slug];
+  const updated = details.updated || "2026-08-13";
   if (!guide) throw new Error(`Missing core guide draft: ${slug}`);
   return {
     ...guide,
     authorId: "jzy",
     cluster: details.cluster,
     status: "core",
-    updated: "2026-08-13",
-    lastTested: "2026-08-13",
+    updated,
+    lastTested: updated,
     testedWith: {
       ...testedWith,
       browsers: [...testedWith.browsers],
@@ -1199,7 +1245,15 @@ export const guides = coreSlugs.map((slug) => {
       {
         date: "2026-08-13",
         note: "Rewritten around a reproducible demo, explicit test record, code comparison, and known platform limits."
-      }
+      },
+      ...(details.changeNote
+        ? [
+            {
+              date: updated,
+              note: details.changeNote
+            }
+          ]
+        : [])
     ]
   };
 });

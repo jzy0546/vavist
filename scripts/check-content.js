@@ -30,6 +30,13 @@ const normalized = (value) =>
     .trim()
     .replace(/\s+/g, " ");
 
+const anchorFor = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
 const assertUnique = (field) => {
   const seen = new Map();
   for (const guide of guides) {
@@ -197,6 +204,27 @@ const validateGuides = () => {
     if (!guide.reason?.trim()) fail(`${guide.slug} needs a retirement reason`);
     if (guide.targetSlug && !coreSlugs.has(guide.targetSlug)) {
       fail(`${guide.slug} points to non-core target ${guide.targetSlug}`);
+    }
+    if (guide.targetSlug && !guide.targetAnchor) {
+      fail(`${guide.slug} needs an exact targetAnchor for its consolidated guide`);
+    }
+    if (!guide.targetSlug && guide.targetAnchor) {
+      fail(`${guide.slug} cannot have targetAnchor without targetSlug`);
+    }
+    if (guide.targetSlug) {
+      const target = guides.find((item) => item.slug === guide.targetSlug);
+      const validAnchors = new Set([
+        ...target.sections.map((section) => anchorFor(section.heading)),
+        ...target.blocks.map((block) => anchorFor(block.heading)),
+        anchorFor(target.code.label),
+        "sources-and-further-reading",
+        "update-record"
+      ]);
+      if (!validAnchors.has(guide.targetAnchor)) {
+        fail(
+          `${guide.slug} targetAnchor ${guide.targetAnchor} does not exist on ${guide.targetSlug}`
+        );
+      }
     }
   }
 };
